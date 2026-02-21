@@ -1,0 +1,495 @@
+{
+    "_README": "LAYA HEALTHCARE — SYNTHETIC JSON DATA (10 USERS). Each user targets a specific edge-case scenario. Feed the relevant user object into the AI agent's context when testing. The '_scenario_note' field explains what each user tests. Auth fields (email, password_hash, etc.) are included for future login/registration support.",
+    "_scheme": "Money Smart 20 Family Cash Plan",
+    "_demo_date": "February 2026",
+    "database": {
+        "members": [
+            {
+                "_scenario_note": "SCENARIO: Mixed batch claim — GP visit + Prescription in one submission. AI must split the claim and apply separate caps: €20 for GP, €10 for prescription. Expected: PARTIALLY APPROVED for €30 total (€20 GP + €10 Rx).",
+                "member_id": "MEM-2001",
+                "first_name": "Eoin",
+                "last_name": "McCarthy",
+                "email": "eoin.mccarthy@email.ie",
+                "phone": "+353-85-111-2001",
+                "password_hash": "$2b$12$aB1cD2eF3gH4iJ5kL6mN7oP8qR9sT0uV1wX2yZ3aB4cD5eF6gH7i",
+                "date_of_birth": "1991-04-12",
+                "iban_last4": "2001",
+                "address_line1": "28 Dame Street",
+                "city": "Dublin",
+                "county": "Dublin",
+                "eircode": "D02 AA11",
+                "scheme_name": "Money Smart 20 Family",
+                "policy_start_date": "2024-06-01",
+                "status": "Active",
+                "created_at": "2024-06-01T10:00:00Z",
+                "updated_at": "2026-01-20T14:30:00Z",
+                "current_year_usage": {
+                    "year": 2026,
+                    "quarter": "Q1",
+                    "q_accumulated_receipts": 185.00,
+                    "gp_visits_count": 3,
+                    "prescription_count": 1,
+                    "dental_optical_count": 0,
+                    "therapy_count": 0,
+                    "scan_count": 0,
+                    "consultant_visits_count": 0,
+                    "hospital_days_count": 0,
+                    "maternity_claimed": false
+                },
+                "claims_history": [
+                    {
+                        "claim_id": "CLM-8001",
+                        "treatment_date": "2026-01-05",
+                        "treatment_type": "GP & A&E",
+                        "practitioner_name": "Dr. Fiona Burke",
+                        "claimed_amount": 55.00,
+                        "status": "Approved"
+                    },
+                    {
+                        "claim_id": "CLM-8002",
+                        "treatment_date": "2026-01-20",
+                        "treatment_type": "Prescription",
+                        "practitioner_name": "Boots Pharmacy",
+                        "claimed_amount": 15.00,
+                        "status": "Approved"
+                    }
+                ]
+            },
+            {
+                "_scenario_note": "SCENARIO: 11th GP visit — annual cap exceeded. gp_visits_count=10 means all 10 allowed visits are used. The next GP claim must be REJECTED. Expected: REJECTED ('Maximum 10 GP visits per year reached').",
+                "member_id": "MEM-2002",
+                "first_name": "Brigid",
+                "last_name": "Sullivan",
+                "email": "brigid.sullivan@email.ie",
+                "phone": "+353-86-222-3002",
+                "password_hash": "$2b$12$bC2dE3fG4hI5jK6lM7nO8pQ9rS0tU1vW2xY3zA4bC5dE6fG7hI8j",
+                "date_of_birth": "1983-08-19",
+                "iban_last4": "3002",
+                "address_line1": "14 Oliver Plunkett Street",
+                "city": "Cork",
+                "county": "Cork",
+                "eircode": "T12 BB22",
+                "scheme_name": "Money Smart 20 Family",
+                "policy_start_date": "2023-11-01",
+                "status": "Active",
+                "created_at": "2023-11-01T09:15:00Z",
+                "updated_at": "2026-02-10T11:20:00Z",
+                "current_year_usage": {
+                    "year": 2026,
+                    "quarter": "Q1",
+                    "q_accumulated_receipts": 280.00,
+                    "gp_visits_count": 10,
+                    "prescription_count": 2,
+                    "dental_optical_count": 3,
+                    "therapy_count": 0,
+                    "scan_count": 2,
+                    "consultant_visits_count": 1,
+                    "hospital_days_count": 0,
+                    "maternity_claimed": false
+                },
+                "claims_history": [
+                    {
+                        "claim_id": "CLM-8003",
+                        "treatment_date": "2026-02-10",
+                        "treatment_type": "GP & A&E",
+                        "practitioner_name": "Dr. Liam Power",
+                        "claimed_amount": 60.00,
+                        "status": "Approved"
+                    }
+                ]
+            },
+            {
+                "_scenario_note": "SCENARIO: Procedure Code 29 (Basal cell carcinoma) — missing histology report. The AI must check that a histology report document is attached. If not attached, claim is REJECTED/PENDING. Expected: REJECTED ('Histology Report required for Procedure Code 29').",
+                "member_id": "MEM-2003",
+                "first_name": "Tadhg",
+                "last_name": "Ryan",
+                "email": "tadhg.ryan@email.ie",
+                "phone": "+353-87-333-4003",
+                "password_hash": "$2b$12$cD3eF4gH5iJ6kL7mN8oP9qR0sT1uV2wX3yZ4aB5cD6eF7gH8iJ9k",
+                "date_of_birth": "1979-02-28",
+                "iban_last4": "4003",
+                "address_line1": "9 William Street",
+                "city": "Limerick",
+                "county": "Limerick",
+                "eircode": "V94 CC33",
+                "scheme_name": "Money Smart 20 Family",
+                "policy_start_date": "2024-02-01",
+                "status": "Active",
+                "created_at": "2024-02-01T13:00:00Z",
+                "updated_at": "2026-01-28T10:45:00Z",
+                "current_year_usage": {
+                    "year": 2026,
+                    "quarter": "Q1",
+                    "q_accumulated_receipts": 200.00,
+                    "gp_visits_count": 2,
+                    "prescription_count": 0,
+                    "dental_optical_count": 0,
+                    "therapy_count": 0,
+                    "scan_count": 0,
+                    "consultant_visits_count": 1,
+                    "hospital_days_count": 3,
+                    "maternity_claimed": false
+                },
+                "claims_history": [
+                    {
+                        "claim_id": "CLM-8004",
+                        "treatment_date": "2026-01-28",
+                        "treatment_type": "Hospital In-patient",
+                        "practitioner_name": "Mater Hospital",
+                        "claimed_amount": 60.00,
+                        "status": "Approved"
+                    }
+                ]
+            },
+            {
+                "_scenario_note": "SCENARIO: Procedure Code 16 (Phlebotomy) with Clinical Indicator 0222 — missing initial serum ferritin levels. The AI must verify serum ferritin is documented on the first claim. Expected: REJECTED ('Initial serum ferritin levels required for Procedure Code 16, Clinical Indicator 0222').",
+                "member_id": "MEM-2004",
+                "first_name": "Orla",
+                "last_name": "Nolan",
+                "email": "orla.nolan@email.ie",
+                "phone": "+353-83-444-5004",
+                "password_hash": "$2b$12$dE4fG5hI6jK7lM8nO9pQ0rS1tU2vW3xY4zA5bC6dE7fG8hI9jK0l",
+                "date_of_birth": "1996-11-05",
+                "iban_last4": "5004",
+                "address_line1": "6 Merchants Quay",
+                "city": "Dublin",
+                "county": "Dublin",
+                "eircode": "D08 DD44",
+                "scheme_name": "Money Smart 20 Family",
+                "policy_start_date": "2024-08-15",
+                "status": "Active",
+                "created_at": "2024-08-15T08:30:00Z",
+                "updated_at": "2026-01-12T15:10:00Z",
+                "current_year_usage": {
+                    "year": 2026,
+                    "quarter": "Q1",
+                    "q_accumulated_receipts": 170.00,
+                    "gp_visits_count": 1,
+                    "prescription_count": 1,
+                    "dental_optical_count": 0,
+                    "therapy_count": 0,
+                    "scan_count": 0,
+                    "consultant_visits_count": 0,
+                    "hospital_days_count": 0,
+                    "maternity_claimed": false
+                },
+                "claims_history": [
+                    {
+                        "claim_id": "CLM-8005",
+                        "treatment_date": "2026-01-12",
+                        "treatment_type": "GP & A&E",
+                        "practitioner_name": "Dr. Eamon Cleary",
+                        "claimed_amount": 50.00,
+                        "status": "Approved"
+                    }
+                ]
+            },
+            {
+                "_scenario_note": "SCENARIO: In-patient stay of 45 days — exceeds 40-day annual maximum. hospital_days_count=0 so all 40 are available, but a 45-day claim must be PARTIALLY APPROVED for 40 days (€800) and 5 days rejected. Expected: PARTIALLY APPROVED ('Approved for 40 days × €20 = €800. Remaining 5 days rejected — exceeds annual 40-day limit').",
+                "member_id": "MEM-2005",
+                "first_name": "Fionn",
+                "last_name": "O'Brien",
+                "email": "fionn.obrien@email.ie",
+                "phone": "+353-89-555-6005",
+                "password_hash": "$2b$12$eF5gH6iJ7kL8mN9oP0qR1sT2uV3wX4yZ5aB6cD7eF8gH9iJ0kL1m",
+                "date_of_birth": "1987-06-20",
+                "iban_last4": "6005",
+                "address_line1": "17 Abbeygate Street",
+                "city": "Galway",
+                "county": "Galway",
+                "eircode": "H91 EE55",
+                "scheme_name": "Money Smart 20 Family",
+                "policy_start_date": "2023-04-01",
+                "status": "Active",
+                "created_at": "2023-04-01T11:00:00Z",
+                "updated_at": "2026-01-08T09:30:00Z",
+                "current_year_usage": {
+                    "year": 2026,
+                    "quarter": "Q1",
+                    "q_accumulated_receipts": 160.00,
+                    "gp_visits_count": 2,
+                    "prescription_count": 0,
+                    "dental_optical_count": 1,
+                    "therapy_count": 0,
+                    "scan_count": 0,
+                    "consultant_visits_count": 0,
+                    "hospital_days_count": 0,
+                    "maternity_claimed": false
+                },
+                "claims_history": [
+                    {
+                        "claim_id": "CLM-8006",
+                        "treatment_date": "2026-01-08",
+                        "treatment_type": "GP & A&E",
+                        "practitioner_name": "Dr. Ciaran Flood",
+                        "claimed_amount": 45.00,
+                        "status": "Approved"
+                    }
+                ]
+            },
+            {
+                "_scenario_note": "SCENARIO: Private hospital invoice rejection — Cash Plan restriction. User submits a €5,000 private room/surgery invoice expecting full coverage. The Money Smart plan is a Cash Plan, NOT in-patient health insurance. Expected: REJECTED ('Cash Plan does not cover private hospital invoices. Only €20/day cash back is available').",
+                "member_id": "MEM-2006",
+                "first_name": "Maeve",
+                "last_name": "Duffy",
+                "email": "maeve.duffy@email.ie",
+                "phone": "+353-85-666-7006",
+                "password_hash": "$2b$12$fG6hI7jK8lM9nO0pQ1rS2tU3vW4xY5zA6bC7dE8fG9hI0jK1lM2n",
+                "date_of_birth": "1990-09-13",
+                "iban_last4": "7006",
+                "address_line1": "42 George's Street",
+                "city": "Waterford",
+                "county": "Waterford",
+                "eircode": "X91 FF66",
+                "scheme_name": "Money Smart 20 Family",
+                "policy_start_date": "2024-01-15",
+                "status": "Active",
+                "created_at": "2024-01-15T14:45:00Z",
+                "updated_at": "2026-02-01T16:20:00Z",
+                "current_year_usage": {
+                    "year": 2026,
+                    "quarter": "Q1",
+                    "q_accumulated_receipts": 210.00,
+                    "gp_visits_count": 3,
+                    "prescription_count": 1,
+                    "dental_optical_count": 2,
+                    "therapy_count": 0,
+                    "scan_count": 1,
+                    "consultant_visits_count": 0,
+                    "hospital_days_count": 0,
+                    "maternity_claimed": false
+                },
+                "claims_history": [
+                    {
+                        "claim_id": "CLM-8007",
+                        "treatment_date": "2026-01-15",
+                        "treatment_type": "GP & A&E",
+                        "practitioner_name": "Dr. Aoife Murray",
+                        "claimed_amount": 60.00,
+                        "status": "Approved"
+                    },
+                    {
+                        "claim_id": "CLM-8008",
+                        "treatment_date": "2026-02-01",
+                        "treatment_type": "Dental & Optical",
+                        "practitioner_name": "Crystal Clear Opticians",
+                        "claimed_amount": 40.00,
+                        "status": "Approved"
+                    }
+                ]
+            },
+            {
+                "_scenario_note": "SCENARIO: Prescription annual limit exhausted (4/4 used). prescription_count=4 means all 4 allowed prescriptions are used for the year. The next prescription claim must be REJECTED. Expected: REJECTED ('Maximum 4 prescriptions per year reached').",
+                "member_id": "MEM-2007",
+                "first_name": "Cillian",
+                "last_name": "Moran",
+                "email": "cillian.moran@email.ie",
+                "phone": "+353-86-777-8007",
+                "password_hash": "$2b$12$gH7iJ8kL9mN0oP1qR2sT3uV4wX5yZ6aB7cD8eF9gH0iJ1kL2mN3o",
+                "date_of_birth": "1984-01-30",
+                "iban_last4": "8007",
+                "address_line1": "11 High Street",
+                "city": "Kilkenny",
+                "county": "Kilkenny",
+                "eircode": "R95 GG77",
+                "scheme_name": "Money Smart 20 Family",
+                "policy_start_date": "2024-05-01",
+                "status": "Active",
+                "created_at": "2024-05-01T12:30:00Z",
+                "updated_at": "2026-02-10T13:15:00Z",
+                "current_year_usage": {
+                    "year": 2026,
+                    "quarter": "Q1",
+                    "q_accumulated_receipts": 195.00,
+                    "gp_visits_count": 4,
+                    "prescription_count": 4,
+                    "dental_optical_count": 1,
+                    "therapy_count": 1,
+                    "scan_count": 0,
+                    "consultant_visits_count": 0,
+                    "hospital_days_count": 0,
+                    "maternity_claimed": false
+                },
+                "claims_history": [
+                    {
+                        "claim_id": "CLM-8009",
+                        "treatment_date": "2026-01-05",
+                        "treatment_type": "Prescription",
+                        "practitioner_name": "McCabes Pharmacy",
+                        "claimed_amount": 12.00,
+                        "status": "Approved"
+                    },
+                    {
+                        "claim_id": "CLM-8010",
+                        "treatment_date": "2026-01-18",
+                        "treatment_type": "Prescription",
+                        "practitioner_name": "McCabes Pharmacy",
+                        "claimed_amount": 9.00,
+                        "status": "Approved"
+                    },
+                    {
+                        "claim_id": "CLM-8011",
+                        "treatment_date": "2026-02-02",
+                        "treatment_type": "Prescription",
+                        "practitioner_name": "Lloyds Pharmacy",
+                        "claimed_amount": 14.00,
+                        "status": "Approved"
+                    },
+                    {
+                        "claim_id": "CLM-8012",
+                        "treatment_date": "2026-02-10",
+                        "treatment_type": "Prescription",
+                        "practitioner_name": "Lloyds Pharmacy",
+                        "claimed_amount": 11.00,
+                        "status": "Approved"
+                    }
+                ]
+            },
+            {
+                "_scenario_note": "SCENARIO: Consultant 10th visit + near threshold combo. consultant_visits_count=9, meaning 1 visit remains. A consultant claim should be APPROVED (the 10th and final). Also tests threshold — q_accumulated_receipts=145 so a €60 consultant receipt pushes total to €205 crossing €150 threshold. Expected: APPROVED ('10th consultant visit approved for €20. Quarterly threshold crossed — payment triggered').",
+                "member_id": "MEM-2008",
+                "first_name": "Aisling",
+                "last_name": "Healy",
+                "email": "aisling.healy@email.ie",
+                "phone": "+353-87-888-9008",
+                "password_hash": "$2b$12$hI8jK9lM0nO1pQ2rS3tU4vW5xY6zA7bC8dE9fG0hI1jK2lM3nO4p",
+                "date_of_birth": "1994-10-07",
+                "iban_last4": "9008",
+                "address_line1": "33 Barronstrand Street",
+                "city": "Waterford",
+                "county": "Waterford",
+                "eircode": "X91 HH88",
+                "scheme_name": "Money Smart 20 Family",
+                "policy_start_date": "2023-12-01",
+                "status": "Active",
+                "created_at": "2023-12-01T16:00:00Z",
+                "updated_at": "2026-02-05T08:50:00Z",
+                "current_year_usage": {
+                    "year": 2026,
+                    "quarter": "Q1",
+                    "q_accumulated_receipts": 145.00,
+                    "gp_visits_count": 5,
+                    "prescription_count": 2,
+                    "dental_optical_count": 2,
+                    "therapy_count": 0,
+                    "scan_count": 0,
+                    "consultant_visits_count": 9,
+                    "hospital_days_count": 0,
+                    "maternity_claimed": false
+                },
+                "claims_history": [
+                    {
+                        "claim_id": "CLM-8013",
+                        "treatment_date": "2026-02-05",
+                        "treatment_type": "Consultant Fee",
+                        "practitioner_name": "Dr. Kevin Ward",
+                        "claimed_amount": 80.00,
+                        "status": "Approved"
+                    }
+                ]
+            },
+            {
+                "_scenario_note": "SCENARIO: Happy path — everything is valid, all limits within range, threshold already crossed. A standard GP claim should be fully APPROVED with no issues. Use this to show the AI works smoothly for normal cases too. Expected: APPROVED ('Claim valid. GP visit #4 of 10 approved for €20').",
+                "member_id": "MEM-2009",
+                "first_name": "Dara",
+                "last_name": "Fitzpatrick",
+                "email": "dara.fitzpatrick@email.ie",
+                "phone": "+353-83-999-0009",
+                "password_hash": "$2b$12$iJ9kL0mN1oP2qR3sT4uV5wX6yZ7aB8cD9eF0gH1iJ2kL3mN4oP5q",
+                "date_of_birth": "1986-03-22",
+                "iban_last4": "0009",
+                "address_line1": "20 Cruise's Street",
+                "city": "Limerick",
+                "county": "Limerick",
+                "eircode": "V94 II99",
+                "scheme_name": "Money Smart 20 Family",
+                "policy_start_date": "2024-09-01",
+                "status": "Active",
+                "created_at": "2024-09-01T10:45:00Z",
+                "updated_at": "2026-01-28T12:00:00Z",
+                "current_year_usage": {
+                    "year": 2026,
+                    "quarter": "Q1",
+                    "q_accumulated_receipts": 220.00,
+                    "gp_visits_count": 3,
+                    "prescription_count": 1,
+                    "dental_optical_count": 2,
+                    "therapy_count": 1,
+                    "scan_count": 1,
+                    "consultant_visits_count": 0,
+                    "hospital_days_count": 0,
+                    "maternity_claimed": false
+                },
+                "claims_history": [
+                    {
+                        "claim_id": "CLM-8014",
+                        "treatment_date": "2026-01-10",
+                        "treatment_type": "GP & A&E",
+                        "practitioner_name": "Dr. Ronan Daly",
+                        "claimed_amount": 55.00,
+                        "status": "Approved"
+                    },
+                    {
+                        "claim_id": "CLM-8015",
+                        "treatment_date": "2026-01-28",
+                        "treatment_type": "Scan Cover",
+                        "practitioner_name": "St. Vincent's Hospital",
+                        "claimed_amount": 120.00,
+                        "status": "Approved"
+                    }
+                ]
+            },
+            {
+                "_scenario_note": "SCENARIO: Dental & Optical near annual limit. dental_optical_count=9, meaning 1 visit remains of the 10 allowed per year. A dental claim should be APPROVED (the 10th). A second dental claim right after should be REJECTED (11th). Expected first claim: APPROVED ('10th dental/optical visit approved for €20'). Expected second claim: REJECTED ('Maximum 10 dental/optical visits per year reached').",
+                "member_id": "MEM-2010",
+                "first_name": "Sinead",
+                "last_name": "Collins",
+                "email": "sinead.collins@email.ie",
+                "phone": "+353-89-000-1010",
+                "password_hash": "$2b$12$jK0lM1nO2pQ3rS4tU5vW6xY7zA8bC9dE0fG1hI2jK3lM4nO5pQ6r",
+                "date_of_birth": "1997-07-14",
+                "iban_last4": "1010",
+                "address_line1": "2 Clanbrassil Street",
+                "city": "Dundalk",
+                "county": "Louth",
+                "eircode": "A91 JJ00",
+                "scheme_name": "Money Smart 20 Family",
+                "policy_start_date": "2024-04-01",
+                "status": "Active",
+                "created_at": "2024-04-01T09:00:00Z",
+                "updated_at": "2026-02-03T14:40:00Z",
+                "current_year_usage": {
+                    "year": 2026,
+                    "quarter": "Q1",
+                    "q_accumulated_receipts": 260.00,
+                    "gp_visits_count": 4,
+                    "prescription_count": 3,
+                    "dental_optical_count": 9,
+                    "therapy_count": 2,
+                    "scan_count": 3,
+                    "consultant_visits_count": 2,
+                    "hospital_days_count": 0,
+                    "maternity_claimed": false
+                },
+                "claims_history": [
+                    {
+                        "claim_id": "CLM-8016",
+                        "treatment_date": "2026-01-15",
+                        "treatment_type": "Dental & Optical",
+                        "practitioner_name": "Dublin City Dental",
+                        "claimed_amount": 35.00,
+                        "status": "Approved"
+                    },
+                    {
+                        "claim_id": "CLM-8017",
+                        "treatment_date": "2026-02-03",
+                        "treatment_type": "Dental & Optical",
+                        "practitioner_name": "Specsavers Grafton St",
+                        "claimed_amount": 50.00,
+                        "status": "Approved"
+                    }
+                ]
+            }
+        ]
+    }
+}
