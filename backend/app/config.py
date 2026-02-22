@@ -49,5 +49,17 @@ class Settings:
     # API Timeout
     LLM_TIMEOUT: int = int(os.getenv("LLM_TIMEOUT", "30"))
 
+    # LLM Child Agents — set to false to skip LLM enhancement of responses
+    USE_LLM_CHILDREN: bool = os.getenv("USE_LLM_CHILDREN", "true").lower() == "true"
+
+    # Rate limiting
+    RATE_LIMIT_CHAT: str = os.getenv("RATE_LIMIT_CHAT", "30/minute")
+
+    # Input validation
+    MAX_MESSAGE_LENGTH: int = int(os.getenv("MAX_MESSAGE_LENGTH", "2000"))
+
+    # JWT (should be a random secret in production)
+    JWT_SECRET: str = os.getenv("JWT_SECRET", "laya-healthcare-secret-key-2026")
+
 
 settings = Settings()

@@ -1,16 +1,27 @@
 """
 Laya Healthcare — Parent Agent 5: Exceptions, Maternity & Legal
 Handles maternity/adoption, duplicate detection, and third-party escalation.
+
+Child Agents (LLM-powered):
+  - Maternity Processor: Processes maternity/adoption claims
+  - Duplicate & Fraud Detector: Detects duplicate/fraudulent claims
+  - Third-Party Escalator: Handles solicitor/PIAB escalation
 """
 
 from __future__ import annotations
 
 from app.agents.state import ClaimState
 from app.tools.db_tools import check_existing_claim
+from app.agents.child_agents import (
+    invoke_maternity_processor,
+    invoke_duplicate_detector,
+    invoke_third_party_escalator,
+)
 
 
-def exceptions_node(state: ClaimState) -> dict:
-    """Handle exception cases: maternity, duplicates, third-party claims."""
+async def exceptions_node(state: ClaimState) -> dict:
+    """Handle exception cases: maternity, duplicates, third-party claims.
+    Uses LLM child agents for enhanced natural language responses."""
     member_data = state.get("member_data", {})
     extracted_doc = state.get("extracted_doc", {})
     usage = member_data.get("current_year_usage", {})
@@ -22,19 +33,19 @@ def exceptions_node(state: ClaimState) -> dict:
 
     # ── Check 1: Maternity / Adoption ──
     if "Pre/Post-Natal" in form_type or "Maternity" in treatment_type or "maternity" in treatment_type.lower():
-        return _process_maternity(usage, extracted_doc, trace_entries)
+        return await _process_maternity(usage, extracted_doc, trace_entries)
 
     # ── Check 2: Third-Party / Solicitor ──
     is_accident = extracted_doc.get("is_accident", False)
     solicitor_involved = extracted_doc.get("solicitor_involved", False)
     if is_accident or solicitor_involved:
-        return _process_third_party(extracted_doc, trace_entries)
+        return await _process_third_party(extracted_doc, trace_entries)
 
     # ── Check 3: Duplicate / Fraud Detection ──
-    return _check_duplicate(member_data, extracted_doc, trace_entries)
+    return await _check_duplicate(member_data, extracted_doc, trace_entries)
 
 
-def _process_maternity(usage: dict, extracted_doc: dict, trace: list) -> dict:
+async def _process_maternity(usage: dict, extracted_doc: dict, trace: list) -> dict:
     """Process maternity/adoption flat-rate cash back."""
     maternity_claimed = usage.get("maternity_claimed", False)
     total_cost = extracted_doc.get("total_cost", 0.0)
@@ -43,7 +54,7 @@ def _process_maternity(usage: dict, extracted_doc: dict, trace: list) -> dict:
 
     if maternity_claimed:
         trace.append("Exceptions Agent → REJECTED: Maternity already claimed this year")
-        return {
+        result = {
             "current_agent": "Exceptions Agent",
             "agent_trace": trace,
             "decision": "REJECTED",
@@ -53,6 +64,10 @@ def _process_maternity(usage: dict, extracted_doc: dict, trace: list) -> dict:
             ),
             "payout_amount": 0.0,
         }
+        enhanced, child_trace = await invoke_maternity_processor(maternity_claimed, total_cost, result)
+        trace.append(child_trace)
+        result["reasoning"] = enhanced
+        return result
 
     payout = 200.0  # flat rate
     excess = max(0, total_cost - payout)
@@ -61,7 +76,7 @@ def _process_maternity(usage: dict, extracted_doc: dict, trace: list) -> dict:
     if excess > 0:
         trace.append(f"Exceptions Agent → Note: €{excess:.2f} not covered (Cash Plan limit)")
 
-    return {
+    result = {
         "current_agent": "Exceptions Agent",
         "agent_trace": trace,
         "decision": "APPROVED",
@@ -73,9 +88,13 @@ def _process_maternity(usage: dict, extracted_doc: dict, trace: list) -> dict:
         "payout_amount": payout,
         "flags": ["MATERNITY_DB_UPDATE"],
     }
+    enhanced, child_trace = await invoke_maternity_processor(maternity_claimed, total_cost, result)
+    trace.append(child_trace)
+    result["reasoning"] = enhanced
+    return result
 
 
-def _process_third_party(extracted_doc: dict, trace: list) -> dict:
+async def _process_third_party(extracted_doc: dict, trace: list) -> dict:
     """Handle third-party liability and solicitor escalation."""
     is_accident = extracted_doc.get("is_accident", False)
     solicitor = extracted_doc.get("solicitor_involved", False)
@@ -93,7 +112,7 @@ def _process_third_party(extracted_doc: dict, trace: list) -> dict:
 
     trace.append("Exceptions Agent → APPROVED with LEGAL_REVIEW escalation")
 
-    return {
+    result = {
         "current_agent": "Exceptions Agent",
         "agent_trace": trace,
         "decision": "APPROVED",
@@ -106,9 +125,13 @@ def _process_third_party(extracted_doc: dict, trace: list) -> dict:
         "payout_amount": min(extracted_doc.get("total_cost", 0), 20.0),
         "flags": flags,
     }
+    enhanced, child_trace = await invoke_third_party_escalator(is_accident, solicitor, result)
+    trace.append(child_trace)
+    result["reasoning"] = enhanced
+    return result
 
 
-def _check_duplicate(member_data: dict, extracted_doc: dict, trace: list) -> dict:
+async def _check_duplicate(member_data: dict, extracted_doc: dict, trace: list) -> dict:
     """Check for duplicate claims in the member's history."""
     member_id = member_data.get("member_id", "")
     treatment_date = extracted_doc.get("treatment_date", "")
@@ -117,17 +140,17 @@ def _check_duplicate(member_data: dict, extracted_doc: dict, trace: list) -> dic
 
     trace.append("Exceptions Agent → Duplicate & Fraud Detector")
 
-    result = check_existing_claim.invoke({
+    dup_result = check_existing_claim.invoke({
         "member_id": member_id,
         "treatment_date": treatment_date,
         "practitioner_name": practitioner,
         "claimed_amount": amount,
     })
 
-    if result.get("is_duplicate"):
-        existing_id = result.get("existing_claim_id", "Unknown")
+    if dup_result.get("is_duplicate"):
+        existing_id = dup_result.get("existing_claim_id", "Unknown")
         trace.append(f"Exceptions Agent → DUPLICATE FOUND: {existing_id}")
-        return {
+        result = {
             "current_agent": "Exceptions Agent",
             "agent_trace": trace,
             "decision": "REJECTED",
@@ -139,6 +162,12 @@ def _check_duplicate(member_data: dict, extracted_doc: dict, trace: list) -> dic
             "payout_amount": 0.0,
             "flags": ["DUPLICATE"],
         }
+        enhanced, child_trace = await invoke_duplicate_detector(
+            member_id, treatment_date, practitioner, amount, result,
+        )
+        trace.append(child_trace)
+        result["reasoning"] = enhanced
+        return result
 
     trace.append("Exceptions Agent → No duplicates found ✓")
 

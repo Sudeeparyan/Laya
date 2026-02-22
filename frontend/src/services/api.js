@@ -11,6 +11,28 @@ const api = axios.create({
   timeout: 60000, // 60s for LLM calls
 });
 
+// Attach auth token to every request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('laya_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle 401 responses globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('laya_token');
+      localStorage.removeItem('laya_user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 /**
  * Fetch all members (summary view for sidebar).
  */
@@ -52,6 +74,48 @@ export async function uploadDocument(file) {
   const { data } = await api.post('/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+  return data;
+}
+
+// ── Developer Dashboard Queue API ──────────────────
+
+/**
+ * Fetch all claims across all members for the developer queue.
+ */
+export async function fetchClaimsQueue() {
+  const { data } = await api.get('/queue/claims');
+  return data;
+}
+
+/**
+ * Fetch dashboard analytics (stats, risk scores, etc.).
+ */
+export async function fetchAnalytics() {
+  const { data } = await api.get('/queue/analytics');
+  return data;
+}
+
+/**
+ * Run the AI pipeline on a claim for developer-assisted review.
+ */
+export async function runAIAnalysis(payload) {
+  const { data } = await api.post('/queue/ai-analyze', payload);
+  return data;
+}
+
+/**
+ * Submit the developer's final human decision on a claim.
+ */
+export async function submitClaimReview(payload) {
+  const { data } = await api.post('/queue/review', payload);
+  return data;
+}
+
+/**
+ * Fetch all members with full details (developer overview).
+ */
+export async function fetchMembersOverview() {
+  const { data } = await api.get('/queue/members-overview');
   return data;
 }
 

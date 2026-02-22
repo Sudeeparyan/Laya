@@ -52,14 +52,21 @@ def check_existing_claim(
     claimed_amount: float,
 ) -> dict:
     """Check if a claim with the same treatment date, practitioner, and amount
-    already exists for this member. Returns whether a duplicate was found."""
+    already exists for this member. Returns whether a duplicate was found.
+    If practitioner_name is empty or 'Not specified', matches on date + amount only."""
     history = get_claims_history(member_id)
+    # If practitioner is unknown, skip practitioner matching (lenient mode)
+    skip_practitioner = not practitioner_name or practitioner_name.lower() in (
+        "not specified", "n/a", "unknown", "",
+    )
     for claim in history:
-        if (
-            claim.get("treatment_date") == treatment_date
-            and claim.get("practitioner_name", "").lower() == practitioner_name.lower()
-            and abs(claim.get("claimed_amount", 0) - claimed_amount) < 0.01
-        ):
+        date_match = claim.get("treatment_date") == treatment_date
+        amount_match = abs(claim.get("claimed_amount", 0) - claimed_amount) < 0.01
+        prac_match = (
+            skip_practitioner
+            or claim.get("practitioner_name", "").lower() == practitioner_name.lower()
+        )
+        if date_match and amount_match and prac_match:
             return {
                 "is_duplicate": True,
                 "existing_claim_id": claim.get("claim_id"),

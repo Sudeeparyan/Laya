@@ -98,6 +98,8 @@ class ClaimRequest(BaseModel):
     message: str
     member_id: str
     extracted_document_data: Optional[ExtractedDocumentData] = None
+    user_context: Optional[dict] = None  # { name, email, role, member_id, user_id }
+    session_id: Optional[str] = None  # For multi-turn conversation support
 
 
 class AgentTraceEntry(BaseModel):
@@ -128,6 +130,10 @@ class ClaimResponse(BaseModel):
     needs_info: list[str] = Field(
         default_factory=list,
         description="Missing documents or information"
+    )
+    session_id: Optional[str] = Field(
+        default=None,
+        description="Session ID for multi-turn conversation continuity"
     )
 
 

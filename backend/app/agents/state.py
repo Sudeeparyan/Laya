@@ -14,6 +14,13 @@ class ClaimState(TypedDict, total=False):
     # Conversation
     messages: Annotated[list, operator.add]  # chat history (HumanMessage / AIMessage)
 
+    # Authenticated user context (from JWT / login session)
+    user_context: dict  # { name, email, role, member_id, user_id }
+
+    # Session & multi-turn conversation support
+    session_id: str  # unique session identifier for multi-turn
+    conversation_history: Annotated[list[dict], operator.add]  # previous interactions in this session
+
     # Member context
     member_id: str
     member_data: dict  # full member record from DB

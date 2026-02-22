@@ -1,16 +1,22 @@
 """
 Laya Healthcare — Parent Agent 4: Hospital & Complex Procedure Processing
 Handles in-patient stays, procedure code validation, and hospital invoices.
+
+Child Agents (LLM-powered):
+  - In-Patient Calculator: Calculates hospital cash back payout
+  - Procedure Code Validator: Validates clinical requirements per procedure code
 """
 
 from __future__ import annotations
 
 from app.agents.state import ClaimState
 from app.tools.policy_tools import calculate_hospital_payout
+from app.agents.child_agents import invoke_inpatient_calculator, invoke_procedure_code_validator
 
 
-def hospital_node(state: ClaimState) -> dict:
-    """Process hospital and complex procedure claims."""
+async def hospital_node(state: ClaimState) -> dict:
+    """Process hospital and complex procedure claims.
+    Uses LLM child agents for enhanced natural language responses."""
     member_data = state.get("member_data", {})
     extracted_doc = state.get("extracted_doc", {})
     usage = member_data.get("current_year_usage", {})
@@ -23,7 +29,8 @@ def hospital_node(state: ClaimState) -> dict:
 
     # ── Check 1: Private hospital invoice rejection ──
     # The Cash Plan does NOT cover private hospital invoices
-    if total_cost > 1000 and "Hospital In-patient" not in treatment_type:
+    # FIX: Only check against non-hospital treatment types (removed empty string match)
+    if total_cost > 1000 and treatment_type not in ("Hospital In-patient",):
         trace_entries.append("Hospital Agent → REJECTED: Private hospital invoice detected")
         return {
             "current_agent": "Hospital Agent",
@@ -38,17 +45,17 @@ def hospital_node(state: ClaimState) -> dict:
             "payout_amount": 0.0,
         }
 
-    # ── Check 2: Procedure Code Validation ──
+    # ── Check 2: Procedure Code Validation (with Child Agent) ──
     procedure_code = extracted_doc.get("procedure_code")
     if procedure_code:
-        result = _validate_procedure_code(extracted_doc, trace_entries)
+        result = await _validate_procedure_code(extracted_doc, trace_entries)
         if result:
             return result
 
-    # ── Check 3: Hospital In-patient Cash Back ──
+    # ── Check 3: Hospital In-patient Cash Back (with Child Agent) ──
     hospital_days = extracted_doc.get("hospital_days", 0)
     if hospital_days and hospital_days > 0:
-        return _process_hospital_days(hospital_days, usage, practitioner, trace_entries)
+        return await _process_hospital_days(hospital_days, usage, total_cost, practitioner, trace_entries)
 
     # Default: treat as a hospital-related outpatient claim
     trace_entries.append("Hospital Agent → Processing as hospital day-case")
@@ -62,7 +69,7 @@ def hospital_node(state: ClaimState) -> dict:
     }
 
 
-def _process_hospital_days(hospital_days: int, usage: dict, practitioner: str, trace: list) -> dict:
+async def _process_hospital_days(hospital_days: int, usage: dict, total_cost: float, practitioner: str, trace: list) -> dict:
     """Calculate hospital in-patient cash back payout."""
     days_used = usage.get("hospital_days_count", 0)
 
@@ -79,7 +86,7 @@ def _process_hospital_days(hospital_days: int, usage: dict, practitioner: str, t
 
     if approved_days == 0:
         trace.append(f"Hospital Agent → REJECTED: All 40 hospital days already used")
-        return {
+        output = {
             "current_agent": "Hospital Agent",
             "agent_trace": trace,
             "decision": "REJECTED",
@@ -89,13 +96,17 @@ def _process_hospital_days(hospital_days: int, usage: dict, practitioner: str, t
             ),
             "payout_amount": 0.0,
         }
+        enhanced, child_trace = await invoke_inpatient_calculator(hospital_days, days_used, total_cost, output)
+        trace.append(child_trace)
+        output["reasoning"] = enhanced
+        return output
 
     if rejected_days > 0:
         trace.append(
             f"Hospital Agent → PARTIALLY APPROVED: {approved_days} days approved, "
             f"{rejected_days} days rejected"
         )
-        return {
+        output = {
             "current_agent": "Hospital Agent",
             "agent_trace": trace,
             "decision": "PARTIALLY APPROVED",
@@ -107,9 +118,13 @@ def _process_hospital_days(hospital_days: int, usage: dict, practitioner: str, t
             ),
             "payout_amount": payout,
         }
+        enhanced, child_trace = await invoke_inpatient_calculator(hospital_days, days_used, total_cost, output)
+        trace.append(child_trace)
+        output["reasoning"] = enhanced
+        return output
 
     trace.append(f"Hospital Agent → APPROVED: {approved_days} days → €{payout:.2f}")
-    return {
+    output = {
         "current_agent": "Hospital Agent",
         "agent_trace": trace,
         "decision": "APPROVED",
@@ -119,19 +134,25 @@ def _process_hospital_days(hospital_days: int, usage: dict, practitioner: str, t
         ),
         "payout_amount": payout,
     }
+    enhanced, child_trace = await invoke_inpatient_calculator(hospital_days, days_used, total_cost, output)
+    trace.append(child_trace)
+    output["reasoning"] = enhanced
+    return output
 
 
-def _validate_procedure_code(extracted_doc: dict, trace: list) -> dict | None:
+async def _validate_procedure_code(extracted_doc: dict, trace: list) -> dict | None:
     """Validate specific procedure code requirements. Returns a result dict if validation fails."""
     procedure_code = extracted_doc.get("procedure_code")
+    clinical_indicator = extracted_doc.get("clinical_indicator", "")
+    histology = extracted_doc.get("histology_report_attached", False)
+    serum_ferritin = extracted_doc.get("serum_ferritin_provided", False)
 
     # Procedure Code 29: Basal cell carcinoma — requires histology report
     if procedure_code == 29:
-        histology = extracted_doc.get("histology_report_attached", False)
         trace.append("Hospital Agent → Procedure Code 29 (Basal cell carcinoma) detected")
         if not histology:
             trace.append("Hospital Agent → REJECTED: Histology Report not attached")
-            return {
+            output = {
                 "current_agent": "Hospital Agent",
                 "agent_trace": trace,
                 "decision": "REJECTED",
@@ -142,16 +163,21 @@ def _validate_procedure_code(extracted_doc: dict, trace: list) -> dict | None:
                 "payout_amount": 0.0,
                 "needs_info": ["Histology Report"],
             }
+            # Enhance with Procedure Code Validator child agent
+            enhanced, child_trace = await invoke_procedure_code_validator(
+                procedure_code, clinical_indicator, histology, serum_ferritin, output,
+            )
+            trace.append(child_trace)
+            output["reasoning"] = enhanced
+            return output
         trace.append("Hospital Agent → Histology Report verified ✓")
 
     # Procedure Code 16: Phlebotomy — requires serum ferritin levels
     if procedure_code == 16:
-        clinical_indicator = extracted_doc.get("clinical_indicator", "")
-        serum_ferritin = extracted_doc.get("serum_ferritin_provided", False)
         trace.append("Hospital Agent → Procedure Code 16 (Phlebotomy) detected")
         if clinical_indicator == "0222" and not serum_ferritin:
             trace.append("Hospital Agent → REJECTED: Initial serum ferritin levels not documented")
-            return {
+            output = {
                 "current_agent": "Hospital Agent",
                 "agent_trace": trace,
                 "decision": "REJECTED",
@@ -162,6 +188,12 @@ def _validate_procedure_code(extracted_doc: dict, trace: list) -> dict | None:
                 "payout_amount": 0.0,
                 "needs_info": ["Initial serum ferritin levels"],
             }
+            enhanced, child_trace = await invoke_procedure_code_validator(
+                procedure_code, clinical_indicator, histology, serum_ferritin, output,
+            )
+            trace.append(child_trace)
+            output["reasoning"] = enhanced
+            return output
         trace.append("Hospital Agent → Procedure code requirements verified ✓")
 
     return None  # No issues found

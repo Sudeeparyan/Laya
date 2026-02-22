@@ -1,7 +1,7 @@
 // API URL and app-wide constants
 
 export const API_BASE_URL = '/api';
-export const WS_BASE_URL = `ws://${window.location.hostname}:8000/ws`;
+export const WS_BASE_URL = `ws://${window.location.hostname}:${window.location.port}/api/ws`;
 
 // Laya brand colors
 export const COLORS = {
