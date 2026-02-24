@@ -27,6 +27,7 @@ Session store layout (per session_id):
 
 from __future__ import annotations
 
+import os
 import re
 import json
 import logging
@@ -40,11 +41,51 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 # ──────────────────────────────────────────────
-# In-memory session store
+# In-memory session store  (persisted to disk)
 # ──────────────────────────────────────────────
 _sessions: dict[str, dict] = {}
 
+# Mapping: user_id -> list of session_ids they own
+_user_sessions: dict[str, list[str]] = {}
+
 MAX_MESSAGES_PER_SESSION = 50
+
+# Persistence path for chat sessions
+_SESSIONS_PERSIST_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "data", "chat_sessions.json"
+)
+
+
+def _persist_sessions() -> None:
+    """Save all chat sessions to disk so they survive server restarts."""
+    try:
+        state = {
+            "sessions": _sessions,
+            "user_sessions": _user_sessions,
+        }
+        os.makedirs(os.path.dirname(_SESSIONS_PERSIST_PATH), exist_ok=True)
+        with open(_SESSIONS_PERSIST_PATH, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2, default=str)
+    except Exception as e:
+        logger.warning(f"Failed to persist chat sessions: {e}")
+
+
+def load_sessions() -> None:
+    """Load previously persisted chat sessions from disk."""
+    global _sessions, _user_sessions
+    if not os.path.exists(_SESSIONS_PERSIST_PATH):
+        return
+    try:
+        with open(_SESSIONS_PERSIST_PATH, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        if "sessions" in state:
+            _sessions.update(state["sessions"])
+        if "user_sessions" in state:
+            _user_sessions.update(state["user_sessions"])
+        print(f"[CHAT] Restored {len(_sessions)} chat sessions from disk")
+    except Exception as e:
+        logger.warning(f"Failed to load persisted chat sessions: {e}")
 
 
 def get_session(session_id: str) -> dict:
@@ -57,6 +98,47 @@ def get_session(session_id: str) -> dict:
     return _sessions[session_id]
 
 
+def link_session_to_user(session_id: str, user_id: str) -> None:
+    """Link a session to a user so we can retrieve their history later."""
+    if user_id not in _user_sessions:
+        _user_sessions[user_id] = []
+    if session_id not in _user_sessions[user_id]:
+        _user_sessions[user_id].append(session_id)
+
+
+def get_user_session_ids(user_id: str) -> list[str]:
+    """Return all session IDs belonging to a user."""
+    return _user_sessions.get(user_id, [])
+
+
+def get_all_user_sessions(user_id: str) -> list[dict]:
+    """Return all sessions for a user with their messages and context."""
+    session_ids = get_user_session_ids(user_id)
+    results = []
+    for sid in session_ids:
+        session = _sessions.get(sid)
+        if session and session.get("messages"):
+            # Build a summary for the session
+            msgs = session["messages"]
+            first_user_msg = next((m["content"] for m in msgs if m["role"] == "user"), "New conversation")
+            title = first_user_msg[:60] + "..." if len(first_user_msg) > 60 else first_user_msg
+            last_ctx = session.get("last_claim_context", {})
+            results.append({
+                "session_id": sid,
+                "title": title,
+                "message_count": len(msgs),
+                "messages": msgs,
+                "last_claim_context": last_ctx,
+                "created_at": msgs[0].get("timestamp", "") if msgs else "",
+                "updated_at": msgs[-1].get("timestamp", "") if msgs else "",
+                "decision": last_ctx.get("decision", ""),
+                "member_id": last_ctx.get("member_id", ""),
+            })
+    # Sort by most recent first
+    results.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+    return results
+
+
 def add_message(session_id: str, role: str, content: str, **extra) -> None:
     """Append a message to the session."""
     session = get_session(session_id)
@@ -66,12 +148,14 @@ def add_message(session_id: str, role: str, content: str, **extra) -> None:
     # Trim to prevent memory bloat
     if len(session["messages"]) > MAX_MESSAGES_PER_SESSION:
         session["messages"] = session["messages"][-MAX_MESSAGES_PER_SESSION:]
+    _persist_sessions()
 
 
 def save_claim_context(session_id: str, ctx: dict) -> None:
     """Persist the result of a claim pipeline run so follow-ups can reference it."""
     session = get_session(session_id)
     session["last_claim_context"] = ctx
+    _persist_sessions()
 
 
 def get_messages(session_id: str) -> list[dict]:

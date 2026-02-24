@@ -22,6 +22,7 @@ export default function DashboardPage() {
     members,
     selectedMember,
     selectMember,
+    refreshMember,
     loading: membersLoading,
     membersLoading: membersListLoading,
     error: membersError,
@@ -44,6 +45,8 @@ export default function DashboardPage() {
     lastResult,
     sendMessage,
     clearChat,
+    connectClaimStatusWs,
+    refreshClaimStatuses,
   } = useChat();
 
   const [isPanelVisible, setIsPanelVisible] = useState(true);
@@ -65,6 +68,49 @@ export default function DashboardPage() {
     }
   }, [isCustomer, user, selectedMember, members, selectMember]);
 
+  // Connect claim status WebSocket for customer users
+  useEffect(() => {
+    if (isCustomer && selectedMember?.member_id && connectClaimStatusWs) {
+      connectClaimStatusWs(selectedMember.member_id);
+    }
+  }, [isCustomer, selectedMember, connectClaimStatusWs]);
+
+  // Refresh claim statuses on login (check if any pending claims were reviewed)
+  // Also refresh member data to get updated usage counters
+  const lastRefreshedMemberRef = useRef(null);
+  useEffect(() => {
+    if (isCustomer && selectedMember?.member_id && refreshClaimStatuses) {
+      // Only run once per member selection (not on every re-render)
+      if (lastRefreshedMemberRef.current === selectedMember.member_id) return;
+      lastRefreshedMemberRef.current = selectedMember.member_id;
+
+      refreshClaimStatuses(selectedMember.member_id).then(() => {
+        // Re-fetch member data to pick up any usage changes from reviewed claims
+        refreshMember();
+      });
+    }
+  }, [isCustomer, selectedMember?.member_id, refreshClaimStatuses, refreshMember]);
+
+  // Refresh member data when claim decision changes from PENDING → APPROVED/REJECTED
+  // This updates the usage bars and member info in the right panel
+  const prevDecisionRef = useRef(decision);
+  useEffect(() => {
+    const prev = prevDecisionRef.current;
+    prevDecisionRef.current = decision;
+
+    if (
+      prev &&
+      (prev === 'PENDING' || prev === 'PENDING_THRESHOLD') &&
+      decision &&
+      decision !== 'PENDING' &&
+      decision !== 'PENDING_THRESHOLD' &&
+      decision !== prev
+    ) {
+      // Decision just changed from PENDING to something else — refresh member data
+      refreshMember();
+    }
+  }, [decision, refreshMember]);
+
   // Logout handler with navigation
   const handleLogout = useCallback(() => {
     logout();
@@ -83,8 +129,8 @@ export default function DashboardPage() {
   );
 
   const handleSendMessage = useCallback(
-    (text, memberId, docData) => {
-      sendMessage(text, memberId, docData);
+    (text, memberId, docData, fileInfo) => {
+      sendMessage(text, memberId, docData, fileInfo);
     },
     [sendMessage]
   );
@@ -163,7 +209,7 @@ export default function DashboardPage() {
         }
         right={
           showArchitecture && isDeveloper ? (
-            <div className="panel-right" style={{ width: 480, minWidth: 480 }}>
+            <div className="panel-right">
               <ArchitectureView
                 agentTrace={agentTrace}
                 isProcessing={isLoading}

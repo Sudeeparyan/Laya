@@ -9,15 +9,46 @@ from __future__ import annotations
 import base64
 import re
 import zlib
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request
+from fastapi.responses import FileResponse
 
-from app.models.database import get_claims_history
+from app.models.database import get_claims_history, add_uploaded_document, add_activity
 from app.tools.ocr_tools import mock_ocr_extract, real_ocr_extract
 from app.config import settings
+from app.auth.users import decode_token, get_user_by_id
 
 router = APIRouter()
 
+
+@router.get("/files/{doc_id}")
+async def serve_file(doc_id: str):
+    """Serve a previously uploaded file by its document ID for preview."""
+    import os, glob
+    uploads_dir = settings.UPLOADS_DIR
+    # Find files matching the doc_id prefix
+    matches = glob.glob(os.path.join(uploads_dir, f"{doc_id}.*"))
+    if not matches:
+        raise HTTPException(status_code=404, detail=f"File {doc_id} not found")
+
+    file_path = matches[0]
+    filename = os.path.basename(file_path)
+    ext = os.path.splitext(filename)[1].lower()
+
+    media_types = {
+        ".pdf": "application/pdf",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }
+
+    return FileResponse(
+        path=file_path,
+        media_type=media_types.get(ext, "application/octet-stream"),
+        filename=filename,
+        headers={"Content-Disposition": "inline"},
+    )
 
 @router.get("/claims/{member_id}")
 async def get_member_claims(member_id: str):
@@ -183,14 +214,31 @@ def _parse_claim_fields_from_text(text: str) -> dict:
 
 
 @router.post("/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(request: Request, file: UploadFile = File(...)):
     """Upload a claim document for OCR processing.
 
     In mock mode (default), extracts text from the PDF and parses claim fields.
     In real mode (USE_REAL_OCR=true), processes the image via GPT-4V.
+    Also tracks the upload for developer visibility.
     """
     try:
         contents = await file.read()
+
+        # Extract user context from JWT for tracking
+        uploader_info = {}
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1]
+            payload = decode_token(token)
+            if payload:
+                user = get_user_by_id(payload["sub"])
+                if user:
+                    uploader_info = {
+                        "uploaded_by": f"{user.get('first_name', '')} {user.get('last_name', '')}".strip(),
+                        "uploaded_by_email": user.get("email", ""),
+                        "uploaded_by_role": user.get("role", "customer"),
+                        "linked_member_id": user.get("member_id"),
+                    }
 
         if settings.USE_REAL_OCR:
             # Real OCR via GPT-4V
@@ -237,6 +285,56 @@ async def upload_document(file: UploadFile = File(...)):
                 ),
                 "extracted_data": extracted_data,
             }
+
+        # Track the document upload for developer visibility
+        member_id = result.get("extracted_data", {}).get("member_id", "") or uploader_info.get("linked_member_id", "")
+        doc_id = f"DOC-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+
+        # Save the actual file to disk for preview
+        import os
+        uploads_dir = settings.UPLOADS_DIR
+        os.makedirs(uploads_dir, exist_ok=True)
+        file_ext = os.path.splitext(file.filename or "file")[1] or ".pdf"
+        saved_filename = f"{doc_id}{file_ext}"
+        saved_path = os.path.join(uploads_dir, saved_filename)
+        with open(saved_path, "wb") as f:
+            f.write(contents)
+
+        file_url = f"/api/files/{doc_id}"
+
+        if member_id:
+            doc_record = {
+                "doc_id": doc_id,
+                "filename": file.filename or "unknown",
+                "saved_filename": saved_filename,
+                "file_url": file_url,
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
+                "extraction_method": result.get("extraction_method", "unknown"),
+                "extracted_data": result.get("extracted_data", {}),
+                **uploader_info,
+            }
+            add_uploaded_document(member_id, doc_record)
+
+            # Track activity for developer monitoring
+            add_activity({
+                "type": "file_upload",
+                "member_id": member_id,
+                "user_name": uploader_info.get("uploaded_by", "Unknown"),
+                "user_role": uploader_info.get("uploaded_by_role", "customer"),
+                "description": f"Uploaded document: {file.filename or 'unknown'}",
+                "details": {
+                    "doc_id": doc_id,
+                    "filename": file.filename,
+                    "file_url": file_url,
+                    "treatment_type": result.get("extracted_data", {}).get("treatment_type", ""),
+                    "total_cost": result.get("extracted_data", {}).get("total_cost", 0),
+                    "extraction_method": result.get("extraction_method", "unknown"),
+                },
+            })
+
+        # Include file_url in the response so frontend can preview
+        result["file_url"] = file_url
+        result["doc_id"] = doc_id
 
         return result
 

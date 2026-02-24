@@ -38,6 +38,7 @@ from app.agents.conversation import (
     save_claim_context,
     is_follow_up,
     handle_follow_up,
+    link_session_to_user,
 )
 from app.models.database import get_member_by_id, update_usage, add_claim_to_history
 
@@ -212,6 +213,7 @@ def decision_node(state: ClaimState) -> dict:
 
     # Handle PENDING_THRESHOLD flag: if claim was approved but below quarterly threshold,
     # override to PENDING and adjust reasoning
+    original_ai_decision = decision  # Capture before any PENDING overrides
     if "PENDING_THRESHOLD" in flags and decision == "APPROVED":
         usage = state.get("member_data", {}).get("current_year_usage", {})
         accumulated = usage.get("q_accumulated_receipts", 0.0)
@@ -229,8 +231,17 @@ def decision_node(state: ClaimState) -> dict:
         )
 
     # ── Update the Database after a successful claim ──
-    if decision in ("APPROVED", "PARTIALLY APPROVED") and member_id:
-        # Update the correct usage counter based on treatment type
+    # Determine if this is a customer-submitted claim
+    user_role = user_context.get("role", "customer") if user_context else "customer"
+    # Capture the original AI decision BEFORE any PENDING overrides
+    # (PENDING_THRESHOLD may have already changed decision to PENDING above)
+    ai_decision = original_ai_decision  # Set earlier, before threshold override
+    ai_reasoning = reasoning
+    ai_payout = payout
+
+    # Build deferred usage updates (applied immediately for developers, deferred for customers)
+    deferred_usage_updates = []
+    if ai_decision in ("APPROVED", "PARTIALLY APPROVED") and member_id:
         usage_field_map = {
             "GP & A&E": "gp_visits_count",
             "Consultant Fee": "consultant_visits_count",
@@ -241,36 +252,57 @@ def decision_node(state: ClaimState) -> dict:
         }
         usage_field = usage_field_map.get(treatment_type)
         if usage_field:
-            update_usage(member_id, usage_field, 1)
-            trace_entries.append(f"Decision Agent → DB Updated: {usage_field} +1")
+            deferred_usage_updates.append({"field": usage_field, "increment": 1})
 
-        # Update hospital days if applicable (FIX: removed empty string match)
         hospital_days = extracted_doc.get("hospital_days", 0)
         if hospital_days and treatment_type == "Hospital In-patient":
             approved_days = hospital_days
-            if decision == "PARTIALLY APPROVED":
+            if ai_decision == "PARTIALLY APPROVED":
                 member_data = state.get("member_data", {})
                 days_used = member_data.get("current_year_usage", {}).get("hospital_days_count", 0)
                 approved_days = min(hospital_days, 40 - days_used)
-            update_usage(member_id, "hospital_days_count", approved_days)
-            trace_entries.append(f"Decision Agent → DB Updated: hospital_days_count +{approved_days}")
+            deferred_usage_updates.append({"field": "hospital_days_count", "increment": approved_days})
 
-        # Update quarterly accumulated receipts
         total_cost = extracted_doc.get("total_cost", 0.0)
         if total_cost > 0:
-            update_usage(member_id, "q_accumulated_receipts", total_cost)
-            trace_entries.append(f"Decision Agent → DB Updated: q_accumulated_receipts +€{total_cost:.2f}")
+            deferred_usage_updates.append({"field": "q_accumulated_receipts", "increment": total_cost})
 
+    # For customer-submitted claims, set status to PENDING (human review required)
+    # Usage updates are DEFERRED — only applied when developer approves
+    if user_role == "customer" and decision in ("APPROVED", "REJECTED", "PARTIALLY APPROVED"):
+        original_decision = decision
+        decision = "PENDING"
+        trace_entries.append(
+            f"Decision Agent → Customer claim: AI recommends {original_decision}, setting status to PENDING for human review"
+        )
+        trace_entries.append(
+            f"Decision Agent → Usage updates deferred until human review approval"
+        )
+    else:
+        # Developer/non-customer claims: apply usage updates immediately
+        for upd in deferred_usage_updates:
+            update_usage(member_id, upd["field"], upd["increment"])
+            trace_entries.append(f"Decision Agent → DB Updated: {upd['field']} +{upd['increment']}")
+        deferred_usage_updates = []  # Clear since they've been applied
+
+    # Always add to claims history (including PENDING)
+    if member_id and extracted_doc.get("treatment_type"):
         # Add to claims history
         claim_record = {
             "claim_id": f"CLM-{datetime.now().strftime('%Y%m%d%H%M%S')}",
             "treatment_type": treatment_type,
             "treatment_date": extracted_doc.get("treatment_date", ""),
             "claimed_amount": extracted_doc.get("total_cost", 0.0),
-            "approved_amount": payout,
+            "approved_amount": ai_payout if ai_decision in ("APPROVED", "PARTIALLY APPROVED") else 0,
             "status": decision,
             "practitioner_name": extracted_doc.get("practitioner_name", ""),
             "submitted_date": datetime.now().strftime("%Y-%m-%d"),
+            "ai_recommendation": ai_decision,
+            "ai_reasoning": ai_reasoning,
+            "ai_confidence": 0.95 if ai_decision in ("APPROVED", "REJECTED") else 0.70,
+            "ai_payout_amount": ai_payout,
+            "ai_flags": flags,
+            "deferred_usage_updates": deferred_usage_updates,  # Applied when dev approves
         }
         add_claim_to_history(member_id, claim_record)
         trace_entries.append(f"Decision Agent → Claim {claim_record['claim_id']} recorded in history")
@@ -410,6 +442,10 @@ async def process_claim(
     if not session_id:
         session_id = str(uuid.uuid4())[:12]
 
+    # Link session to user for chat history retrieval
+    if user_context and user_context.get("user_id"):
+        link_session_to_user(session_id, user_context["user_id"])
+
     # ── Follow-up detection ──
     # If the user is asking a follow-up question (not a new claim),
     # use the conversation manager instead of re-running the full pipeline.
@@ -482,6 +518,10 @@ async def process_claim_streaming(
     """
     if not session_id:
         session_id = str(uuid.uuid4())[:12]
+
+    # Link session to user for chat history retrieval
+    if user_context and user_context.get("user_id"):
+        link_session_to_user(session_id, user_context["user_id"])
 
     # Follow-up detection for streaming too
     if is_follow_up(user_message, session_id):

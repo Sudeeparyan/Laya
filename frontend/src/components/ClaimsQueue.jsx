@@ -5,6 +5,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Filter, ChevronDown, ChevronUp, ArrowUpDown,
@@ -28,10 +29,41 @@ function getStatusStyle(status) {
   return STATUS_STYLES.pending;
 }
 
+// Priority badge component
+const PRIORITY_COLORS = {
+  HIGH:   { bg: '#fef2f2', text: '#dc2626', border: '#fca5a5', icon: '🔴' },
+  MEDIUM: { bg: '#fffbeb', text: '#d97706', border: '#fcd34d', icon: '🟡' },
+  LOW:    { bg: '#f0fdf4', text: '#16a34a', border: '#86efac', icon: '🟢' },
+};
+
+function PriorityBadge({ priority }) {
+  if (!priority) return null;
+  const c = PRIORITY_COLORS[priority.level] || PRIORITY_COLORS.LOW;
+  return (
+    <span
+      style={{
+        background: c.bg,
+        color: c.text,
+        border: `1px solid ${c.border}`,
+        padding: '2px 8px',
+        borderRadius: '12px',
+        fontSize: '11px',
+        fontWeight: 600,
+        whiteSpace: 'nowrap',
+      }}
+      title={priority.reasons?.join(', ') || ''}
+    >
+      {c.icon} {priority.level}
+    </span>
+  );
+}
+
 export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedClaimId, onRefresh }) {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('date');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('priority');
   const [sortDir, setSortDir] = useState('desc');
 
   const filteredClaims = useMemo(() => {
@@ -56,6 +88,13 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
       );
     }
 
+    // Priority filter
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(c =>
+        c.priority?.level === priorityFilter
+      );
+    }
+
     // Sort
     filtered.sort((a, b) => {
       let cmp = 0;
@@ -67,12 +106,14 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
         cmp = (a.member_name || '').localeCompare(b.member_name || '');
       } else if (sortBy === 'status') {
         cmp = (a.status || '').localeCompare(b.status || '');
+      } else if (sortBy === 'priority') {
+        cmp = (a.priority?.score || 0) - (b.priority?.score || 0);
       }
       return sortDir === 'desc' ? -cmp : cmp;
     });
 
     return filtered;
-  }, [claims, searchQuery, statusFilter, sortBy, sortDir]);
+  }, [claims, searchQuery, statusFilter, priorityFilter, sortBy, sortDir]);
 
   function toggleSort(field) {
     if (sortBy === field) {
@@ -94,12 +135,21 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
     return counts;
   }, [claims]);
 
+  const priorityCounts = useMemo(() => {
+    const counts = { all: claims?.length || 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+    (claims || []).forEach(c => {
+      const level = c.priority?.level || 'LOW';
+      counts[level] = (counts[level] || 0) + 1;
+    });
+    return counts;
+  }, [claims]);
+
   return (
     <div className="dev-claims-queue">
       {/* Header bar */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg gradient-teal flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-laya-blue to-laya-blue-mid flex items-center justify-center shadow-md shadow-blue-200">
             <FileText size={16} className="text-white" />
           </div>
           <div>
@@ -109,7 +159,7 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
         </div>
         <button
           onClick={onRefresh}
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-laya-teal transition-colors"
+          className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-laya-blue transition-colors"
           title="Refresh claims"
         >
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -126,7 +176,7 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search claims, members, practitioners..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-laya-teal/40 focus:ring-2 focus:ring-laya-teal/10 transition-all placeholder:text-gray-300"
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-blue-100 text-sm bg-blue-50/30 focus:outline-none focus:border-laya-blue/40 focus:ring-2 focus:ring-laya-blue/10 transition-all placeholder:text-gray-400"
           />
         </div>
 
@@ -143,7 +193,32 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
               onClick={() => setStatusFilter(f.key)}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
                 statusFilter === f.key
-                  ? 'bg-laya-teal text-white shadow-sm'
+                  ? 'bg-laya-blue text-white shadow-sm'
+                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+              }`}
+            >
+              {f.label} ({f.count})
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Priority filter pills */}
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Priority:</span>
+        <div className="flex items-center gap-1">
+          {[
+            { key: 'all', label: 'All', count: priorityCounts.all },
+            { key: 'HIGH', label: '🔴 High', count: priorityCounts.HIGH },
+            { key: 'MEDIUM', label: '🟡 Medium', count: priorityCounts.MEDIUM },
+            { key: 'LOW', label: '🟢 Low', count: priorityCounts.LOW },
+          ].map(f => (
+            <button
+              key={f.key}
+              onClick={() => setPriorityFilter(f.key)}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                priorityFilter === f.key
+                  ? 'bg-laya-blue text-white shadow-sm'
                   : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
               }`}
             >
@@ -158,27 +233,33 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
         {/* Table header */}
         <div className="grid grid-cols-12 gap-2 px-4 py-2.5 bg-gray-50/80 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
           <button
-            className="col-span-2 flex items-center gap-1 hover:text-laya-teal transition-colors text-left"
+            className="col-span-2 flex items-center gap-1 hover:text-laya-blue transition-colors text-left"
             onClick={() => toggleSort('member')}
           >
             Member {sortBy === 'member' && (sortDir === 'asc' ? <ChevronUp size={10} /> : <ChevronDown size={10} />)}
           </button>
           <div className="col-span-2">Treatment</div>
           <button
-            className="col-span-2 flex items-center gap-1 hover:text-laya-teal transition-colors text-left"
+            className="col-span-1 flex items-center gap-1 hover:text-laya-blue transition-colors text-left"
             onClick={() => toggleSort('date')}
           >
             Date {sortBy === 'date' && (sortDir === 'asc' ? <ChevronUp size={10} /> : <ChevronDown size={10} />)}
           </button>
           <div className="col-span-2">Practitioner</div>
           <button
-            className="col-span-1 flex items-center gap-1 hover:text-laya-teal transition-colors text-left"
+            className="col-span-1 flex items-center gap-1 hover:text-laya-blue transition-colors text-left"
             onClick={() => toggleSort('amount')}
           >
             Amount {sortBy === 'amount' && (sortDir === 'asc' ? <ChevronUp size={10} /> : <ChevronDown size={10} />)}
           </button>
           <button
-            className="col-span-2 flex items-center gap-1 hover:text-laya-teal transition-colors text-left"
+            className="col-span-1 flex items-center gap-1 hover:text-laya-blue transition-colors text-left"
+            onClick={() => toggleSort('priority')}
+          >
+            Priority {sortBy === 'priority' && (sortDir === 'asc' ? <ChevronUp size={10} /> : <ChevronDown size={10} />)}
+          </button>
+          <button
+            className="col-span-2 flex items-center gap-1 hover:text-laya-blue transition-colors text-left"
             onClick={() => toggleSort('status')}
           >
             Status {sortBy === 'status' && (sortDir === 'asc' ? <ChevronUp size={10} /> : <ChevronDown size={10} />)}
@@ -206,9 +287,9 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
         {/* Empty state */}
         {!loading && filteredClaims.length === 0 && (
           <div className="text-center py-12">
-            <FileText size={32} className="mx-auto text-gray-300 mb-3" />
+            <FileText size={32} className="mx-auto text-gray-400 mb-3" />
             <p className="text-sm text-gray-400 font-medium">No claims found</p>
-            <p className="text-[11px] text-gray-300 mt-1">Try adjusting your search or filters</p>
+            <p className="text-[11px] text-gray-400 mt-1">Try adjusting your search or filters</p>
           </div>
         )}
 
@@ -227,17 +308,25 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
                   animate={{ opacity: 1 }}
                   transition={{ delay: Math.min(i * 0.02, 0.3) }}
                   onClick={() => onSelectClaim(claim)}
-                  className={`grid grid-cols-12 gap-2 px-4 py-3 cursor-pointer transition-all hover:bg-laya-teal/3 ${
-                    isSelected ? 'bg-laya-teal/5 border-l-2 border-l-laya-teal' : ''
+                  className={`grid grid-cols-12 gap-2 px-4 py-3 cursor-pointer transition-all hover:bg-blue-50/50 ${
+                    isSelected ? 'bg-blue-50 border-l-2 border-l-laya-blue' : ''
                   }`}
                 >
                   {/* Member */}
                   <div className="col-span-2 flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full gradient-teal flex items-center justify-center text-white text-[9px] font-bold shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-laya-blue to-laya-blue-mid flex items-center justify-center text-white text-[9px] font-bold shrink-0 shadow-sm">
                       {claim.member_name?.split(' ').map(n => n[0]).join('') || '??'}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[12px] font-semibold text-laya-navy truncate">{claim.member_name}</p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/dev-dashboard/member/${claim.member_id}`);
+                        }}
+                        className="text-[12px] font-semibold text-laya-navy truncate hover:text-laya-blue hover:underline transition-colors text-left"
+                      >
+                        {claim.member_name}
+                      </button>
                       <p className="text-[9px] text-gray-400 font-mono">{claim.member_id}</p>
                     </div>
                   </div>
@@ -248,9 +337,9 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
                   </div>
 
                   {/* Date */}
-                  <div className="col-span-2 flex items-center gap-1.5">
-                    <Calendar size={11} className="text-gray-300 shrink-0" />
-                    <span className="text-[12px] text-gray-500">{claim.treatment_date}</span>
+                  <div className="col-span-1 flex items-center gap-1.5">
+                    <Calendar size={11} className="text-gray-400 shrink-0" />
+                    <span className="text-[11px] text-gray-500">{claim.treatment_date}</span>
                   </div>
 
                   {/* Practitioner */}
@@ -260,10 +349,15 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
 
                   {/* Amount */}
                   <div className="col-span-1 flex items-center gap-1">
-                    <Euro size={11} className="text-gray-300" />
+                    <Euro size={11} className="text-gray-400" />
                     <span className="text-[12px] font-semibold text-laya-navy">
                       {claim.claimed_amount?.toFixed(2)}
                     </span>
+                  </div>
+
+                  {/* Priority */}
+                  <div className="col-span-1 flex items-center">
+                    <PriorityBadge priority={claim.priority} />
                   </div>
 
                   {/* Status */}
@@ -281,7 +375,7 @@ export default function ClaimsQueue({ claims, loading, onSelectClaim, selectedCl
                         e.stopPropagation();
                         onSelectClaim(claim);
                       }}
-                      className="p-1.5 rounded-lg hover:bg-laya-teal/10 text-gray-400 hover:text-laya-teal transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-laya-blue transition-colors"
                       title="Review with AI"
                     >
                       <BarChart3 size={14} />

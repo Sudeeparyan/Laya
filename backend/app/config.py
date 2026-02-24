@@ -42,6 +42,7 @@ class Settings:
     # Data paths
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     JSON_DATA_PATH: str = os.path.join(BASE_DIR, "data", "json_users.json")
+    UPLOADS_DIR: str = os.path.join(BASE_DIR, "uploads")
 
     # OCR Mode
     USE_REAL_OCR: bool = os.getenv("USE_REAL_OCR", "false").lower() == "true"

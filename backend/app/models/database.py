@@ -18,6 +18,62 @@ from app.config import settings
 # ──────────────────────────────────────────────
 _members: dict[str, dict] = {}
 
+# Document uploads store: member_id -> list of uploaded document metadata
+_uploaded_documents: dict[str, list[dict]] = {}
+
+# Activity log: tracks all user activities for developer monitoring
+_activity_log: list[dict] = []
+
+# Callback requests: customer requests for human support
+_callback_requests: list[dict] = []
+
+# Persistence file path — stores runtime mutations (claims, usage updates)
+_PERSIST_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "data", "runtime_state.json"
+)
+
+
+def _persist_state() -> None:
+    """Save current member data to a JSON file so changes survive server restarts."""
+    try:
+        state = {
+            "members": {mid: copy.deepcopy(m) for mid, m in _members.items()},
+            "uploaded_documents": copy.deepcopy(_uploaded_documents),
+            "activity_log": copy.deepcopy(_activity_log),
+            "callback_requests": copy.deepcopy(_callback_requests),
+        }
+        os.makedirs(os.path.dirname(_PERSIST_PATH), exist_ok=True)
+        with open(_PERSIST_PATH, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2, default=str)
+    except Exception as e:
+        print(f"[DB] WARNING: Failed to persist state: {e}")
+
+
+def _load_persisted_state() -> bool:
+    """Load previously persisted runtime state. Returns True if loaded."""
+    global _members, _uploaded_documents, _activity_log, _callback_requests
+    if not os.path.exists(_PERSIST_PATH):
+        return False
+    try:
+        with open(_PERSIST_PATH, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        if "members" in state:
+            _members.update(state["members"])
+            print(f"[DB] Restored {len(state['members'])} members from persisted state")
+        if "uploaded_documents" in state:
+            _uploaded_documents.update(state["uploaded_documents"])
+        if "activity_log" in state:
+            _activity_log.extend(state["activity_log"])
+            print(f"[DB] Restored {len(state['activity_log'])} activity entries")
+        if "callback_requests" in state:
+            _callback_requests.extend(state["callback_requests"])
+            print(f"[DB] Restored {len(state['callback_requests'])} callback requests")
+        return True
+    except Exception as e:
+        print(f"[DB] WARNING: Failed to load persisted state: {e}")
+        return False
+
 
 # ──────────────────────────────────────────────
 # SQL users hardcoded (MEM-1001 → MEM-1010)
@@ -330,6 +386,9 @@ def load_data() -> None:
         _members[mid] = m
     print(f"[DB] Merged SQL users. Total members: {len(_members)}")
 
+    # 3. Overlay any persisted runtime state (claims, usage updates from prior sessions)
+    _load_persisted_state()
+
 
 def get_all_members() -> list[dict]:
     """Return all members (summary view)."""
@@ -373,6 +432,7 @@ def update_usage(member_id: str, field: str, increment: float | int = 1) -> bool
     if field not in usage:
         return False
     usage[field] += increment
+    _persist_state()
     return True
 
 
@@ -382,4 +442,96 @@ def add_claim_to_history(member_id: str, claim: dict) -> bool:
     if m is None:
         return False
     m.setdefault("claims_history", []).append(claim)
+    _persist_state()
     return True
+
+
+# ──────────────────────────────────────────────
+# Document upload tracking
+# ──────────────────────────────────────────────
+
+def update_claim_status(member_id: str, claim_id: str, updates: dict) -> bool:
+    """Update a specific claim's fields in the original store (not a copy).
+    This is used by the developer review endpoint to persist status changes."""
+    m = _members.get(member_id)
+    if m is None:
+        return False
+    for claim in m.get("claims_history", []):
+        if claim.get("claim_id") == claim_id:
+            claim.update(updates)
+            _persist_state()
+            return True
+    return False
+
+
+def add_uploaded_document(member_id: str, doc_meta: dict) -> bool:
+    """Track a document uploaded by a customer for a member."""
+    _uploaded_documents.setdefault(member_id, []).append(doc_meta)
+    _persist_state()
+    return True
+
+
+def get_uploaded_documents(member_id: str) -> list[dict]:
+    """Return all uploaded documents for a member."""
+    return copy.deepcopy(_uploaded_documents.get(member_id, []))
+
+
+def get_all_uploaded_documents() -> dict[str, list[dict]]:
+    """Return all uploaded documents across all members."""
+    return copy.deepcopy(_uploaded_documents)
+
+
+# ──────────────────────────────────────────────
+# Activity tracking for developer monitoring
+# ──────────────────────────────────────────────
+
+def add_activity(activity: dict) -> bool:
+    """Track a user activity (chat message, file upload, login, etc.)."""
+    from datetime import datetime, timezone
+    activity.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+    activity.setdefault("id", f"ACT-{len(_activity_log) + 1:04d}")
+    _activity_log.append(activity)
+    # Keep max 500 activities in memory
+    if len(_activity_log) > 500:
+        _activity_log.pop(0)
+    _persist_state()
+    return True
+
+
+def get_activities(member_id: Optional[str] = None, limit: int = 50) -> list[dict]:
+    """Return recent activities, optionally filtered by member_id."""
+    if member_id:
+        filtered = [a for a in _activity_log if a.get("member_id") == member_id]
+    else:
+        filtered = list(_activity_log)
+    # Return most recent first
+    return copy.deepcopy(filtered[-limit:][::-1])
+
+
+# ──────────────────────────────────────────────
+# Callback requests — customer care escalation
+# ──────────────────────────────────────────────
+
+def add_callback_request(request: dict) -> dict:
+    """Create a new callback request and return it with a generated ticket ID."""
+    from datetime import datetime, timezone
+    import uuid
+    ticket_id = f"CB-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+    request["ticket_id"] = ticket_id
+    request["status"] = "received"
+    request["created_at"] = datetime.now(timezone.utc).isoformat()
+    _callback_requests.append(request)
+    # Keep max 200 in memory
+    if len(_callback_requests) > 200:
+        _callback_requests.pop(0)
+    _persist_state()
+    return request
+
+
+def get_callback_requests(member_id: Optional[str] = None, limit: int = 50) -> list[dict]:
+    """Return callback requests, optionally filtered by member_id."""
+    if member_id:
+        filtered = [r for r in _callback_requests if r.get("member_id") == member_id]
+    else:
+        filtered = list(_callback_requests)
+    return copy.deepcopy(filtered[-limit:][::-1])

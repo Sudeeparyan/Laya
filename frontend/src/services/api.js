@@ -66,6 +66,22 @@ export async function fetchClaims(memberId) {
 }
 
 /**
+ * Fetch the authenticated user's chat history (all sessions).
+ */
+export async function fetchChatHistory() {
+  const { data } = await api.get('/chat/history');
+  return data;
+}
+
+/**
+ * Fetch a specific chat session by ID.
+ */
+export async function fetchChatSession(sessionId) {
+  const { data } = await api.get(`/chat/session/${sessionId}`);
+  return data;
+}
+
+/**
  * Upload a document for OCR processing.
  */
 export async function uploadDocument(file) {
@@ -116,6 +132,55 @@ export async function submitClaimReview(payload) {
  */
 export async function fetchMembersOverview() {
   const { data } = await api.get('/queue/members-overview');
+  return data;
+}
+
+/**
+ * Fetch comprehensive member profile with analytics.
+ */
+export async function fetchMemberProfile(memberId) {
+  const { data } = await api.get(`/members/${memberId}/profile`);
+  return data;
+}
+
+/**
+ * Fetch uploaded documents for a specific member (developer view).
+ */
+export async function fetchMemberDocuments(memberId) {
+  const { data } = await api.get(`/queue/member-documents/${memberId}`);
+  return data;
+}
+
+/**
+ * Fetch all uploaded documents across all members (developer view).
+ */
+export async function fetchAllDocuments() {
+  const { data } = await api.get(`/queue/all-documents`);
+  return data;
+}
+
+/**
+ * Fetch recent user activities for developer monitoring.
+ */
+export async function fetchActivities(memberId = null, limit = 50) {
+  const params = { limit };
+  if (memberId) params.member_id = memberId;
+  const { data } = await api.get('/queue/activities', { params });
+  return data;
+}
+
+/**
+ * Get the URL for previewing an uploaded file.
+ */
+export function getFilePreviewUrl(docId) {
+  return `${API_BASE_URL}/files/${docId}`;
+}
+
+/**
+ * Submit a customer care callback request.
+ */
+export async function submitCallbackRequest(payload) {
+  const { data } = await api.post('/callback-request', payload);
   return data;
 }
 

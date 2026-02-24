@@ -22,8 +22,8 @@ const CAPABILITIES = [
       total_cost: 60.0,
       signature_present: true,
     },
-    color: 'text-laya-teal',
-    bg: 'bg-laya-teal/5',
+    color: 'text-laya-blue-mid',
+    bg: 'bg-blue-50',
   },
   {
     icon: FileText,
@@ -41,7 +41,7 @@ const CAPABILITIES = [
       signature_present: true,
     },
     color: 'text-laya-blue',
-    bg: 'bg-laya-blue/5',
+    bg: 'bg-blue-50/70',
   },
   {
     icon: Upload,
@@ -59,7 +59,7 @@ const CAPABILITIES = [
       signature_present: true,
     },
     color: 'text-laya-green',
-    bg: 'bg-laya-green/5',
+    bg: 'bg-green-50',
   },
   {
     icon: Building2,
@@ -77,8 +77,8 @@ const CAPABILITIES = [
       hospital_days: 5,
       signature_present: true,
     },
-    color: 'text-purple-500',
-    bg: 'bg-purple-50',
+    color: 'text-pink-600',
+    bg: 'bg-pink-50',
   },
   {
     icon: ShieldCheck,
@@ -135,13 +135,13 @@ export default function WelcomeScreen({ onSelectPrompt, selectedMember }) {
             transition={{ duration: 0.5, delay: 0.1, type: 'spring', stiffness: 200 }}
             className="relative w-18 h-18 mx-auto mb-5"
           >
-            <div className="w-16 h-16 rounded-2xl gradient-teal flex items-center justify-center shadow-xl shadow-laya-teal/25">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-laya-blue to-laya-blue-mid flex items-center justify-center shadow-lg shadow-blue-200">
               <ShieldCheck size={32} className="text-white" />
             </div>
             <motion.div
               animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="absolute inset-0 rounded-2xl border-2 border-laya-teal/30"
+              className="absolute inset-0 rounded-2xl border-2 border-laya-blue/30"
             />
           </motion.div>
           <motion.h2
@@ -156,7 +156,7 @@ export default function WelcomeScreen({ onSelectPrompt, selectedMember }) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-sm text-gray-400 max-w-md mx-auto"
+            className="text-sm text-gray-500 max-w-md mx-auto"
           >
             {selectedMember
               ? `Hi ${selectedMember.first_name}! I can help you with claims, benefits, and more.`
@@ -198,10 +198,10 @@ export default function WelcomeScreen({ onSelectPrompt, selectedMember }) {
                         <h3 className="text-sm font-semibold text-laya-navy">{cap.title}</h3>
                         <ArrowRight
                           size={12}
-                          className="text-gray-300 group-hover:text-laya-teal group-hover:translate-x-0.5 transition-all opacity-0 group-hover:opacity-100"
+                          className="text-gray-400 group-hover:text-laya-blue group-hover:translate-x-0.5 transition-all opacity-0 group-hover:opacity-100"
                         />
                       </div>
-                      <p className="text-[11px] text-gray-400 leading-relaxed mt-0.5">{cap.desc}</p>
+                      <p className="text-[11px] text-gray-500 leading-relaxed mt-0.5">{cap.desc}</p>
                     </div>
                   </div>
                 </motion.button>
@@ -218,9 +218,9 @@ export default function WelcomeScreen({ onSelectPrompt, selectedMember }) {
             transition={{ delay: 0.3 }}
             className="text-center mt-6"
           >
-            <div className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-laya-teal/5 to-cyan-500/5 border border-laya-teal/10 shadow-sm">
-              <span className="w-2.5 h-2.5 rounded-full bg-laya-teal animate-pulse shadow-sm shadow-laya-teal/50" />
-              <span className="text-sm text-laya-teal font-medium">
+            <div className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white/90 border border-blue-200 shadow-lg shadow-blue-50 backdrop-blur-md">
+              <span className="w-2.5 h-2.5 rounded-full bg-laya-blue-mid animate-pulse" />
+              <span className="text-sm text-laya-blue font-medium">
                 Select a member from the left sidebar to begin
               </span>
             </div>
@@ -242,9 +242,9 @@ export default function WelcomeScreen({ onSelectPrompt, selectedMember }) {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 + i * 0.1 }}
-                  className="text-center p-3 rounded-xl bg-white/60 border border-gray-100"
+                  className="text-center p-3 rounded-xl bg-white/90 border border-blue-100 shadow-md shadow-blue-50 backdrop-blur-md"
                 >
-                  <feat.icon size={20} className="mx-auto mb-1.5 text-laya-teal" />
+                  <feat.icon size={20} className="mx-auto mb-1.5 text-laya-blue-mid" />
                   <p className="text-[11px] font-semibold text-laya-navy">{feat.label}</p>
                   <p className="text-[9px] text-gray-400 mt-0.5">{feat.desc}</p>
                 </motion.div>

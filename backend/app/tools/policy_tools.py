@@ -177,3 +177,179 @@ policy_tools = [
     calculate_hospital_payout,
     validate_therapy_type,
 ]
+
+
+# ── Source Document: Money Smart 20 Family IPID ──────────────────
+# This is the official Insurance Product Information Document.
+# Every AI recommendation MUST cite specific text from this document.
+
+IPID_SOURCE = {
+    "document_name": "Money Smart 20 Family — Insurance Product Information Document (IPID)",
+    "document_id": "IPID-MS20F-2026",
+    "issuer": "AXA Insurance dac, trading as Laya Healthcare",
+    "file_path": "Laya docs/insuranceplan/ipid.md",
+    "source_url": "https://www.layahealthcare.ie/api/document/dynamic/ipid?id=65&asOnDate=2026-02-24",
+
+    "sections": {
+        "gp_ae": {
+            "rule": "GP and A&E: Up to €20 for up to 10 visits combined per year.",
+            "section": "What is insured? → Cash Plan",
+            "page": 1,
+        },
+        "hospital_cashback": {
+            "rule": "Hospital day-case / In-patient Cash Back: Up to €20 per day for Hospital day-case or in-patient stay up to a max of 40 days per year.",
+            "section": "What is insured? → Cash Plan",
+            "page": 1,
+        },
+        "prescriptions": {
+            "rule": "Prescriptions: Up to €10 for up to 4 prescriptions per year.",
+            "section": "What is insured? → Cash Plan",
+            "page": 1,
+        },
+        "dental_optical": {
+            "rule": "Routine Dental & Optical Cover: Up to €20 for up to 10 visits combined per year.",
+            "section": "What is insured? → Cash Plan",
+            "page": 1,
+        },
+        "therapies": {
+            "rule": "Day to Day Therapies (Physiotherapy, reflexology, acupuncture, osteopathy, physical therapist, chiropractor): Up to €20 for up to 10 visits combined per year.",
+            "section": "What is insured? → Cash Plan",
+            "page": 1,
+        },
+        "scan_cover": {
+            "rule": "Scan Cover: Up to €20 for up to 10 scans per year.",
+            "section": "What is insured? → Cash Plan",
+            "page": 1,
+        },
+        "consultant_fee": {
+            "rule": "Consultant fee: Up to €20 per visit - 10 visits per year.",
+            "section": "What is insured? → Cash Plan",
+            "page": 1,
+        },
+        "maternity": {
+            "rule": "Maternity / Adoption Cash Back: Up to €200 per birth / adoption per year.",
+            "section": "What is insured? → Cash Plan",
+            "page": 1,
+        },
+        "waiting_period": {
+            "rule": "A 12 week initial waiting period will apply to the cover listed, i.e. once your waiting periods have passed you can claim the benefits included on your scheme.",
+            "section": "Are there any restrictions on cover?",
+            "page": 1,
+        },
+        "quarterly_threshold": {
+            "rule": "Claims can be made on a quarterly basis, once all outstanding premiums have been paid. Claims will only be paid once the accumulated receipts total €150 or more in every quarter submitted.",
+            "section": "Are there any restrictions on cover? → (a)",
+            "page": 1,
+        },
+        "not_insured": {
+            "rule": "Benefits which are not included under 'What is insured' on this document are not eligible for benefit under your chosen scheme.",
+            "section": "What is not insured?",
+            "page": 1,
+        },
+        "receipt_requirements": {
+            "rule": "When you are submitting receipts please make sure that you have included all of the details below: The members name, The type of service and items provided, The name, address and qualifications of practitioner, The date the service was provided, The original and not a photocopy of your receipt.",
+            "section": "Are there any restrictions on cover? → (e)",
+            "page": 1,
+        },
+        "cashback_only": {
+            "rule": "Your MoneySmart scheme is a Cash Back scheme, as it is not an in-patient health insurance scheme it does not include cover for hospital admissions.",
+            "section": "Where am I covered?",
+            "page": 1,
+        },
+    },
+}
+
+
+def get_source_citations(treatment_type: str, rejection_reasons: list[str]) -> list[dict]:
+    """
+    Given a treatment type and list of rejection reasons, return relevant
+    source document citations from the IPID.
+    """
+    citations = []
+
+    # Map treatment types to their IPID section keys
+    treatment_to_key = {
+        "GP & A&E": "gp_ae",
+        "Consultant Fee": "consultant_fee",
+        "Prescription": "prescriptions",
+        "Day-to-Day Therapy": "therapies",
+        "Dental & Optical": "dental_optical",
+        "Scan Cover": "scan_cover",
+        "Hospital": "hospital_cashback",
+        "Maternity": "maternity",
+    }
+
+    source_url = IPID_SOURCE["source_url"]
+
+    # Always cite the relevant benefit rule
+    key = treatment_to_key.get(treatment_type)
+    if key and key in IPID_SOURCE["sections"]:
+        src = IPID_SOURCE["sections"][key]
+        citations.append({
+            "document": IPID_SOURCE["document_name"],
+            "document_id": IPID_SOURCE["document_id"],
+            "section": src["section"],
+            "highlighted_text": src["rule"],
+            "relevance": f"Defines the benefit cap and annual limit for '{treatment_type}' under the member's scheme.",
+            "source_url": source_url,
+        })
+
+    # Cite restriction rules based on rejection reasons
+    reason_str = " ".join(rejection_reasons).lower()
+
+    if "waiting period" in reason_str:
+        src = IPID_SOURCE["sections"]["waiting_period"]
+        citations.append({
+            "document": IPID_SOURCE["document_name"],
+            "document_id": IPID_SOURCE["document_id"],
+            "section": src["section"],
+            "highlighted_text": src["rule"],
+            "relevance": "The 12-week initial waiting period has not elapsed since the member's policy start date.",
+            "source_url": source_url,
+        })
+
+    if "quarterly" in reason_str or "threshold" in reason_str or "€150" in reason_str:
+        src = IPID_SOURCE["sections"]["quarterly_threshold"]
+        citations.append({
+            "document": IPID_SOURCE["document_name"],
+            "document_id": IPID_SOURCE["document_id"],
+            "section": src["section"],
+            "highlighted_text": src["rule"],
+            "relevance": "Quarterly accumulated receipts have not met the €150 threshold for payment.",
+            "source_url": source_url,
+        })
+
+    if "not insured" in reason_str or "not covered" in reason_str or "invalid therapy" in reason_str:
+        src = IPID_SOURCE["sections"]["not_insured"]
+        citations.append({
+            "document": IPID_SOURCE["document_name"],
+            "document_id": IPID_SOURCE["document_id"],
+            "section": src["section"],
+            "highlighted_text": src["rule"],
+            "relevance": "The claimed treatment or therapy type is not listed under covered benefits.",
+            "source_url": source_url,
+        })
+
+    if "receipt" in reason_str or "signature" in reason_str or "form" in reason_str:
+        src = IPID_SOURCE["sections"]["receipt_requirements"]
+        citations.append({
+            "document": IPID_SOURCE["document_name"],
+            "document_id": IPID_SOURCE["document_id"],
+            "section": src["section"],
+            "highlighted_text": src["rule"],
+            "relevance": "The submitted claim form or receipt is missing required information.",
+            "source_url": source_url,
+        })
+
+    if "private hospital" in reason_str or "not in-patient" in reason_str:
+        src = IPID_SOURCE["sections"]["cashback_only"]
+        citations.append({
+            "document": IPID_SOURCE["document_name"],
+            "document_id": IPID_SOURCE["document_id"],
+            "section": src["section"],
+            "highlighted_text": src["rule"],
+            "relevance": "The scheme is a cash back scheme and does not cover private hospital admissions.",
+            "source_url": source_url,
+        })
+
+    return citations

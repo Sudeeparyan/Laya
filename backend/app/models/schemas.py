@@ -135,6 +135,10 @@ class ClaimResponse(BaseModel):
         default=None,
         description="Session ID for multi-turn conversation continuity"
     )
+    source_url: Optional[str] = Field(
+        default=None,
+        description="Link to the official IPID source document used for the decision"
+    )
 
 
 class ChatMessage(BaseModel):
@@ -142,3 +146,21 @@ class ChatMessage(BaseModel):
     role: str  # "user" or "assistant"
     content: str
     metadata: Optional[dict] = None
+
+
+class CallbackRequestIn(BaseModel):
+    """Customer request for a human callback."""
+    member_id: Optional[str] = None
+    member_name: str
+    issue_category: str
+    description: str
+    urgency: str = "medium"  # low, medium, high
+    preferred_contact: str = "phone"  # phone, email
+    contact_info: Optional[str] = None
+
+
+class CallbackRequestOut(BaseModel):
+    """Response after creating a callback request."""
+    ticket_id: str
+    status: str = "received"
+    message: str

@@ -10,12 +10,12 @@ export default function AgentTrace({ trace = [], isProcessing = false }) {
   if (!trace.length && !isProcessing) return null;
 
   return (
-    <div className="mt-4 pt-3 border-t border-gray-100">
+    <div className="mt-4 pt-3 border-t border-blue-100">
       <button
-        className="flex items-center gap-2 text-xs font-semibold text-laya-navy/60 hover:text-laya-navy transition-colors w-full"
+        className="flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-laya-navy transition-colors w-full"
         onClick={() => setExpanded((prev) => !prev)}
       >
-        <GitBranch size={13} className="text-laya-teal" />
+        <GitBranch size={13} className="text-laya-blue-mid" />
         <span>Agent Trace ({trace.length} steps)</span>
         <ChevronDown
           size={13}
@@ -32,7 +32,7 @@ export default function AgentTrace({ trace = [], isProcessing = false }) {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <div className="mt-3 ml-1.5 border-l-2 border-gray-100 pl-4 space-y-0">
+            <div className="mt-3 ml-1.5 border-l-2 border-blue-100 pl-4 space-y-0">
               {trace.map((entry, i) => {
                 const isLast = i === trace.length - 1;
                 const isRejected = entry.toLowerCase().includes('rejected') || entry.toLowerCase().includes('failed');
@@ -42,7 +42,7 @@ export default function AgentTrace({ trace = [], isProcessing = false }) {
                   ? 'text-laya-coral'
                   : isApproved
                   ? 'text-laya-green'
-                  : 'text-gray-300';
+                  : 'text-gray-400';
 
                 const DotIcon = isRejected
                   ? XCircle
@@ -61,7 +61,7 @@ export default function AgentTrace({ trace = [], isProcessing = false }) {
                     className="relative flex items-start gap-2.5 py-1.5"
                   >
                     {/* Timeline dot */}
-                    <div className={`-ml-[23px] mt-0.5 ${dotColor}`}>
+                    <div className={`-ml-[23px] mt-0.5 bg-white rounded-full ${dotColor}`}>
                       <DotIcon size={14} className={isLast && isProcessing ? 'animate-spin' : ''} />
                     </div>
                     {/* Step text */}

@@ -52,7 +52,7 @@ def load_users() -> None:
 
 
 def _seed_defaults() -> None:
-    """Create a default developer and customer account."""
+    """Create a default developer, customer, and test customer account."""
     _register_user(
         email="admin@laya.ie",
         password="admin123",
@@ -67,6 +67,14 @@ def _seed_defaults() -> None:
         last_name="Customer",
         role="customer",
         member_id="MEM-1002",
+    )
+    _register_user(
+        email="test@laya.ie",
+        password="test123",
+        first_name="Liam",
+        last_name="O'Connor",
+        role="customer",
+        member_id="MEM-1001",
     )
 
 

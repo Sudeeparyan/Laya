@@ -257,6 +257,26 @@ DEMO_CLAIMS = [
             "signature_present": True,
         },
     },
+    # NEW: Test User GP Claim Receipt (for improved demo flow)
+    {
+        "filename": "claim_gp_test_liam.pdf",
+        "data": {
+            "member_id": "MEM-1001",
+            "patient_name": "Liam O'Connor",
+            "dob": "1990-03-14",
+            "address": "12 Baggot Street Lower, Dublin",
+            "eircode": "D02 XY45",
+            "form_type": "Money Smart Out-patient Claim Form",
+            "treatment_type": "GP & A&E",
+            "treatment_date": "2026-02-20",
+            "practitioner_name": "Dr. Sarah Murphy",
+            "practitioner_address": "Baggot Street Medical Centre, Dublin 2",
+            "total_cost": 55.00,
+            "iban_last4": "4501",
+            "payment_method": "Paid by Debit Card",
+            "signature_present": True,
+        },
+    },
     # Bonus Scenario: Third-party / Solicitor
     {
         "filename": "claim_accident_sean.pdf",

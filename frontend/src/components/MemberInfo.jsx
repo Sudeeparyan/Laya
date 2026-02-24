@@ -6,7 +6,7 @@ import { User, Calendar, CreditCard, Activity } from 'lucide-react';
 function UsageBar({ label, current, max, unit = '' }) {
   const pct = max > 0 ? (current / max) * 100 : 0;
   const color =
-    pct >= 100 ? 'bg-laya-coral' : pct >= 70 ? 'bg-laya-amber' : 'bg-laya-teal';
+    pct >= 100 ? 'bg-laya-coral' : pct >= 70 ? 'bg-laya-amber' : 'bg-laya-blue-mid';
   const barBg =
     pct >= 100 ? 'bg-red-100' : 'bg-gray-100';
 
@@ -33,7 +33,7 @@ function UsageBar({ label, current, max, unit = '' }) {
 function InfoRow({ icon: Icon, label, children }) {
   return (
     <div className="flex items-start gap-2.5 py-1.5">
-      <Icon size={13} className="text-laya-teal shrink-0 mt-0.5" />
+      <Icon size={13} className="text-laya-blue-mid shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <span className="text-[11px] text-gray-400 block leading-tight">{label}</span>
         <span className="text-xs text-laya-navy font-medium">{children}</span>
@@ -56,7 +56,7 @@ export default function MemberInfo({ member }) {
       className="bg-white rounded-2xl border border-gray-100 p-0 shadow-sm overflow-hidden"
     >
       {/* Header with avatar */}
-      <div className="gradient-teal px-4 py-4 flex items-center gap-3">
+      <div className="bg-gradient-to-r from-laya-blue to-laya-blue-mid px-4 py-4 flex items-center gap-3">
         <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-sm border-2 border-white/30">
           {initials}
         </div>
@@ -91,7 +91,7 @@ export default function MemberInfo({ member }) {
         {/* Usage stats */}
         <div className="mb-1">
           <h4 className="font-semibold text-laya-navy text-xs mb-3 flex items-center gap-1.5">
-            <Activity size={12} className="text-laya-teal" />
+            <Activity size={12} className="text-laya-blue-mid" />
             Usage ({usage.year || 2026} {usage.quarter || 'Q1'})
           </h4>
 
@@ -108,7 +108,7 @@ export default function MemberInfo({ member }) {
             <span>Quarterly Receipts</span>
             <span>
               <strong className="text-laya-navy">€{(usage.q_accumulated_receipts || 0).toFixed(2)}</strong>
-              <span className="text-gray-300 ml-1">/ €150</span>
+              <span className="text-gray-400 ml-1">/ €150</span>
             </span>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function MemberInfo({ member }) {
         {member.claims_history && member.claims_history.length > 0 && (
           <div className="mt-4 pt-3 border-t border-gray-100">
             <h4 className="font-semibold text-laya-navy text-xs mb-2 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-laya-teal" />
+              <span className="w-1.5 h-1.5 rounded-full bg-laya-blue-mid" />
               Recent Claims
             </h4>
             <div className="space-y-1.5 max-h-36 overflow-y-auto">

@@ -48,10 +48,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-6 py-12">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-white via-blue-50 to-pink-50/30 px-6 py-12">
       {/* Background effects */}
-      <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-laya-teal/8 blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-purple-500/6 blur-[120px]" />
+      <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-blue-200/30 blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-pink-200/20 blur-[120px]" />
 
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -62,22 +62,22 @@ export default function RegisterPage() {
         {/* Back link */}
         <Link
           to="/login"
-          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6 group"
+          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-laya-navy transition-colors mb-6 group"
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
           Back to login
         </Link>
 
         {/* Card */}
-        <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-3xl p-8 shadow-2xl">
+        <div className="bg-white/80 backdrop-blur-xl border border-blue-100 rounded-3xl p-8 shadow-xl shadow-blue-100/50">
           {/* Header */}
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-11 h-11 rounded-xl gradient-teal flex items-center justify-center shadow-lg shadow-laya-teal/30">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-laya-blue to-laya-blue-mid flex items-center justify-center shadow-lg shadow-blue-200">
               <Shield size={22} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Create Account</h2>
-              <p className="text-sm text-gray-400">Join Laya Healthcare AI Platform</p>
+              <h2 className="text-xl font-bold text-laya-navy">Create Account</h2>
+              <p className="text-sm text-gray-500">Join Laya Healthcare AI Platform</p>
             </div>
           </div>
 
@@ -90,8 +90,8 @@ export default function RegisterPage() {
               onClick={() => updateField('role', 'customer')}
               className={`relative flex items-center gap-3 px-4 py-4 rounded-xl border transition-all ${
                 form.role === 'customer'
-                  ? 'bg-laya-teal/10 border-laya-teal/40 shadow-lg shadow-laya-teal/10'
-                  : 'bg-white/[0.03] border-white/[0.08] hover:border-white/20'
+                  ? 'bg-blue-50 border-laya-blue-mid/40 shadow-lg shadow-blue-100'
+                  : 'bg-white/50 border-gray-200 hover:border-blue-200'
               }`}
             >
               {form.role === 'customer' && (
@@ -99,16 +99,16 @@ export default function RegisterPage() {
                   layoutId="roleCheck"
                   className="absolute top-2 right-2"
                 >
-                  <CheckCircle size={14} className="text-laya-teal" />
+                  <CheckCircle size={14} className="text-laya-blue-mid" />
                 </motion.div>
               )}
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                form.role === 'customer' ? 'bg-laya-teal/20' : 'bg-white/5'
+                form.role === 'customer' ? 'bg-blue-100' : 'bg-gray-100'
               }`}>
-                <Stethoscope size={20} className={form.role === 'customer' ? 'text-laya-teal' : 'text-gray-500'} />
+                <Stethoscope size={20} className={form.role === 'customer' ? 'text-laya-blue-mid' : 'text-gray-500'} />
               </div>
               <div className="text-left">
-                <p className={`text-sm font-semibold ${form.role === 'customer' ? 'text-white' : 'text-gray-300'}`}>Customer</p>
+                <p className={`text-sm font-semibold ${form.role === 'customer' ? 'text-laya-navy' : 'text-gray-600'}`}>Customer</p>
                 <p className="text-[11px] text-gray-500">View my claims</p>
               </div>
             </motion.button>
@@ -120,8 +120,8 @@ export default function RegisterPage() {
               onClick={() => updateField('role', 'developer')}
               className={`relative flex items-center gap-3 px-4 py-4 rounded-xl border transition-all ${
                 form.role === 'developer'
-                  ? 'bg-purple-500/10 border-purple-500/40 shadow-lg shadow-purple-500/10'
-                  : 'bg-white/[0.03] border-white/[0.08] hover:border-white/20'
+                  ? 'bg-pink-50 border-pink-300 shadow-lg shadow-pink-100'
+                  : 'bg-white/50 border-gray-200 hover:border-pink-200'
               }`}
             >
               {form.role === 'developer' && (
@@ -129,16 +129,16 @@ export default function RegisterPage() {
                   layoutId="roleCheck"
                   className="absolute top-2 right-2"
                 >
-                  <CheckCircle size={14} className="text-purple-400" />
+                  <CheckCircle size={14} className="text-pink-600" />
                 </motion.div>
               )}
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                form.role === 'developer' ? 'bg-purple-500/20' : 'bg-white/5'
+                form.role === 'developer' ? 'bg-pink-100' : 'bg-gray-100'
               }`}>
-                <Code2 size={20} className={form.role === 'developer' ? 'text-purple-400' : 'text-gray-500'} />
+                <Code2 size={20} className={form.role === 'developer' ? 'text-pink-600' : 'text-gray-500'} />
               </div>
               <div className="text-left">
-                <p className={`text-sm font-semibold ${form.role === 'developer' ? 'text-white' : 'text-gray-300'}`}>Developer</p>
+                <p className={`text-sm font-semibold ${form.role === 'developer' ? 'text-laya-navy' : 'text-gray-600'}`}>Developer</p>
                 <p className="text-[11px] text-gray-500">Operator access</p>
               </div>
             </motion.button>
@@ -151,10 +151,10 @@ export default function RegisterPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20"
+                className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200"
               >
-                <AlertCircle size={16} className="text-red-400 shrink-0" />
-                <span className="text-sm text-red-300">{error}</span>
+                <AlertCircle size={16} className="text-red-500 shrink-0" />
+                <span className="text-sm text-red-600">{error}</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -169,7 +169,7 @@ export default function RegisterPage() {
                   value={form.first_name}
                   onChange={(e) => updateField('first_name', e.target.value)}
                   placeholder="First name"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-gray-500 focus:outline-none focus:border-laya-teal/50 focus:ring-2 focus:ring-laya-teal/20 transition-all text-sm"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-blue-50/50 border border-blue-100 text-laya-navy placeholder:text-gray-400 focus:outline-none focus:border-laya-blue-mid/50 focus:ring-2 focus:ring-blue-200 transition-all text-sm"
                   required
                 />
               </div>
@@ -180,7 +180,7 @@ export default function RegisterPage() {
                   value={form.last_name}
                   onChange={(e) => updateField('last_name', e.target.value)}
                   placeholder="Last name"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-gray-500 focus:outline-none focus:border-laya-teal/50 focus:ring-2 focus:ring-laya-teal/20 transition-all text-sm"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-blue-50/50 border border-blue-100 text-laya-navy placeholder:text-gray-400 focus:outline-none focus:border-laya-blue-mid/50 focus:ring-2 focus:ring-blue-200 transition-all text-sm"
                   required
                 />
               </div>
@@ -193,7 +193,7 @@ export default function RegisterPage() {
                 value={form.email}
                 onChange={(e) => updateField('email', e.target.value)}
                 placeholder="Email address"
-                className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-gray-500 focus:outline-none focus:border-laya-teal/50 focus:ring-2 focus:ring-laya-teal/20 transition-all text-sm"
+                className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-blue-50/50 border border-blue-100 text-laya-navy placeholder:text-gray-400 focus:outline-none focus:border-laya-blue-mid/50 focus:ring-2 focus:ring-blue-200 transition-all text-sm"
                 required
               />
             </div>
@@ -205,14 +205,14 @@ export default function RegisterPage() {
                 value={form.password}
                 onChange={(e) => updateField('password', e.target.value)}
                 placeholder="Password (min 6 characters)"
-                className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-gray-500 focus:outline-none focus:border-laya-teal/50 focus:ring-2 focus:ring-laya-teal/20 transition-all text-sm"
+                className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-blue-50/50 border border-blue-100 text-laya-navy placeholder:text-gray-400 focus:outline-none focus:border-laya-blue-mid/50 focus:ring-2 focus:ring-blue-200 transition-all text-sm"
                 required
                 minLength={6}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -234,7 +234,7 @@ export default function RegisterPage() {
                       value={form.member_id}
                       onChange={(e) => updateField('member_id', e.target.value)}
                       placeholder="Member ID (e.g., MEM-1002) — optional"
-                      className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-gray-500 focus:outline-none focus:border-laya-teal/50 focus:ring-2 focus:ring-laya-teal/20 transition-all text-sm"
+                      className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-blue-50/50 border border-blue-100 text-laya-navy placeholder:text-gray-400 focus:outline-none focus:border-laya-blue-mid/50 focus:ring-2 focus:ring-blue-200 transition-all text-sm"
                     />
                   </div>
                   <p className="text-[11px] text-gray-500 mt-1.5 pl-1">
@@ -249,7 +249,7 @@ export default function RegisterPage() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl gradient-teal text-white font-semibold text-sm shadow-lg shadow-laya-teal/25 hover:shadow-xl hover:shadow-laya-teal/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-laya-blue to-laya-blue-mid text-white font-semibold text-sm shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
             >
               {loading ? (
                 <motion.div
@@ -268,7 +268,7 @@ export default function RegisterPage() {
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="text-laya-teal hover:text-laya-teal-light font-medium transition-colors">
+            <Link to="/login" className="text-laya-blue-mid hover:text-laya-blue font-medium transition-colors">
               Sign in
             </Link>
           </p>

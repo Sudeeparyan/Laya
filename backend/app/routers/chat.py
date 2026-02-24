@@ -22,11 +22,78 @@ from slowapi.util import get_remote_address
 import json
 
 from app.config import settings
-from app.models.schemas import ClaimRequest, ClaimResponse
+from app.models.schemas import ClaimRequest, ClaimResponse, CallbackRequestIn, CallbackRequestOut
 from app.agents.graph import process_claim, process_claim_streaming
+from app.agents.conversation import get_all_user_sessions, get_session
 from app.auth.users import decode_token, get_user_by_id
+from app.models.database import add_activity, add_callback_request
 
 router = APIRouter()
+
+
+# ──────────────────────────────────────────────
+# Chat history endpoints
+# ──────────────────────────────────────────────
+
+@router.get("/chat/history")
+async def get_chat_history(request: Request):
+    """Return all chat sessions for the authenticated user.
+    Used to restore chat history after logout/login."""
+    user_context = _extract_user_context(request)
+    if not user_context or not user_context.get("user_id"):
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    sessions = get_all_user_sessions(user_context["user_id"])
+    return {"sessions": sessions, "total": len(sessions)}
+
+
+@router.get("/chat/session/{session_id}")
+async def get_chat_session(session_id: str, request: Request):
+    """Return a specific chat session's messages and context."""
+    user_context = _extract_user_context(request)
+    if not user_context:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    session = get_session(session_id)
+    return {
+        "session_id": session_id,
+        "messages": session.get("messages", []),
+        "last_claim_context": session.get("last_claim_context", {}),
+    }
+
+
+# ──────────────────────────────────────────────
+# Callback request — customer care escalation
+# ──────────────────────────────────────────────
+
+@router.post("/callback-request", response_model=CallbackRequestOut)
+async def create_callback_request(body: CallbackRequestIn, request: Request):
+    """Submit a customer care callback request.
+    Available to authenticated customers who need human assistance."""
+    user_context = _extract_user_context(request)
+    if not user_context:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    cb_data = body.model_dump()
+    cb_data["user_id"] = user_context.get("user_id")
+    cb_data["user_email"] = user_context.get("email", "")
+
+    result = add_callback_request(cb_data)
+
+    # Track activity
+    add_activity({
+        "type": "callback_request",
+        "member_id": body.member_id,
+        "user_id": user_context.get("user_id"),
+        "summary": f"Callback requested: {body.issue_category} ({body.urgency} urgency)",
+        "ticket_id": result["ticket_id"],
+    })
+
+    return CallbackRequestOut(
+        ticket_id=result["ticket_id"],
+        status="received",
+        message=f"Your callback request has been received. A Laya Healthcare specialist will contact you shortly.",
+    )
 
 
 # ──────────────────────────────────────────────
@@ -99,6 +166,11 @@ async def chat_endpoint(request: Request, body: ClaimRequest):
         # The SlowAPI middleware will catch actual rate limit violations
         pass
 
+    # Pre-initialize for the finally block's activity tracking
+    validated_message = body.message or ""
+    user_context = None
+    result_decision = None
+
     try:
         # Validate and sanitize input
         validated_message = _validate_message(body.message)
@@ -133,14 +205,44 @@ async def chat_endpoint(request: Request, body: ClaimRequest):
             session_id=body.session_id,
         )
 
+        # For customer-submitted claims that are PENDING, return a friendly message
+        result_decision = result.get("decision", "PENDING")
+        result_reasoning = result.get("reasoning", "Processing complete.")
+        user_role = user_context.get("role", "customer") if user_context else "customer"
+
+        if result_decision == "PENDING" and user_role == "customer":
+            treatment_type = ""
+            treatment_date = ""
+            total_cost = 0.0
+            if extracted_doc:
+                treatment_type = extracted_doc.get("treatment_type", "")
+                treatment_date = extracted_doc.get("treatment_date", "")
+                total_cost = extracted_doc.get("total_cost", 0.0)
+
+            user_first_name = user_context.get("first_name", "") if user_context else ""
+            greeting = f"Hi {user_first_name}, your" if user_first_name else "Your"
+
+            result_reasoning = (
+                f"✅ **Claim Submitted Successfully**\n\n"
+                f"{greeting} claim has been received and is now **under review** by our claims team.\n\n"
+                f"**Claim Details:**\n"
+                f"- **Treatment:** {treatment_type or 'N/A'}\n"
+                f"- **Date:** {treatment_date or 'N/A'}\n"
+                f"- **Amount:** €{total_cost:.2f}\n\n"
+                f"You will be notified once a decision has been made. "
+                f"Typical processing time is under 24 hours.\n\n"
+                f"_If you have questions about your claim, just ask me here._"
+            )
+
         return ClaimResponse(
-            decision=result.get("decision", "PENDING"),
-            reasoning=result.get("reasoning", "Processing complete."),
+            decision=result_decision,
+            reasoning=result_reasoning,
             agent_trace=result.get("agent_trace", []),
             payout_amount=result.get("payout_amount"),
             flags=result.get("flags", []),
             needs_info=result.get("needs_info", []),
             session_id=result.get("session_id"),
+            source_url="https://www.layahealthcare.ie/api/document/dynamic/ipid?id=65&asOnDate=2026-02-24",
         )
 
     except HTTPException:
@@ -150,6 +252,29 @@ async def chat_endpoint(request: Request, body: ClaimRequest):
             status_code=500,
             detail=f"Error processing claim: {str(e)}",
         )
+    finally:
+        # Track activity for developer monitoring (best-effort)
+        try:
+            user_name = ""
+            user_role = "customer"
+            if user_context:
+                user_name = user_context.get("name", "")
+                user_role = user_context.get("role", "customer")
+            add_activity({
+                "type": "chat_message",
+                "member_id": body.member_id,
+                "user_name": user_name,
+                "user_role": user_role,
+                "description": f"Sent message: {validated_message[:80]}{'...' if len(validated_message) > 80 else ''}",
+                "details": {
+                    "message": validated_message[:200],
+                    "has_document": body.extracted_document_data is not None,
+                    "decision": result_decision,
+                    "session_id": body.session_id,
+                },
+            })
+        except Exception:
+            pass  # Activity tracking is best-effort
 
 
 @router.websocket("/ws/chat")

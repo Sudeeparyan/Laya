@@ -20,5 +20,16 @@
     "member_id": "MEM-1002",
     "avatar_color": "#9B59B6",
     "created_at": "2026-02-22T16:30:21.009456+00:00"
+  },
+  {
+    "id": "user_test_01",
+    "email": "test@laya.ie",
+    "password_hash": "$2b$12$F0qvIcDE3Ritbvc/uMz5M.Nizh181jRdFZhoo22kaVN36C2VCqzZS",
+    "first_name": "Liam",
+    "last_name": "O'Connor",
+    "role": "customer",
+    "member_id": "MEM-1001",
+    "avatar_color": "#00A99D",
+    "created_at": "2026-01-15T10:00:00+00:00"
   }
 ]

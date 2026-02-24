@@ -18,11 +18,11 @@ function StatCard({ icon: Icon, label, value, sub, color, delay = 0 }) {
       className="dev-stat-card group"
     >
       <div className="flex items-center justify-between mb-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${color}`}>
           <Icon size={20} className="text-white" />
         </div>
         {sub && (
-          <span className="text-[10px] font-medium text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] font-medium text-gray-500 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
             {sub}
           </span>
         )}
@@ -60,7 +60,7 @@ export default function AnalyticsCards({ analytics, loading }) {
         icon={Users}
         label="Total Members"
         value={analytics.total_members}
-        color="gradient-teal"
+        color="bg-gradient-to-br from-laya-blue to-laya-blue-mid"
         delay={0}
       />
       <StatCard
@@ -68,7 +68,7 @@ export default function AnalyticsCards({ analytics, loading }) {
         label="Total Claims"
         value={analytics.total_claims}
         sub="All time"
-        color="bg-laya-blue"
+        color="bg-laya-blue-mid"
         delay={0.05}
       />
       <StatCard
@@ -90,7 +90,7 @@ export default function AnalyticsCards({ analytics, loading }) {
         icon={Brain}
         label="AI Accuracy"
         value={`${analytics.ai_accuracy}%`}
-        color="gradient-purple"
+        color="bg-gradient-to-br from-pink-500 to-pink-600"
         delay={0.2}
       />
       <StatCard

@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   Send, Loader, Paperclip, ArrowDown, X, FileText,
-  Upload, PanelRight, ShieldCheck, Network, Mic, MicOff, Keyboard
+  Upload, PanelRight, ShieldCheck, Network, Mic, MicOff, Keyboard, Headphones
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import MessageBubble from './MessageBubble';
 import WelcomeScreen from './WelcomeScreen';
 import SmartSuggestions from './SmartSuggestions';
+import PdfPreview from './PdfPreview';
+import CallbackRequestModal from './CallbackRequestModal';
 import { uploadDocument } from '../services/api';
 
 export default function ChatWindow({
@@ -30,8 +32,12 @@ export default function ChatWindow({
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [documentData, setDocumentData] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState(null);
+  const [uploadedDocId, setUploadedDocId] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [showCallbackModal, setShowCallbackModal] = useState(false);
   const scrollRef = useRef(null);
   const fileRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -60,10 +66,18 @@ export default function ChatWindow({
   function handleSend() {
     if (!input.trim()) return;
     if (!selectedMember) return;
-    onSendMessage(input, selectedMember.member_id, documentData);
+    const fileInfo = uploadedDocId ? {
+      docId: uploadedDocId,
+      fileName: uploadedFile,
+      fileUrl: uploadedFileUrl,
+    } : null;
+    onSendMessage(input, selectedMember.member_id, documentData, fileInfo);
     setInput('');
     setDocumentData(null);
     setUploadedFile(null);
+    setUploadedFileUrl(null);
+    setUploadedDocId(null);
+    setShowPdfPreview(false);
   }
 
   function handleKeyDown(e) {
@@ -85,12 +99,19 @@ export default function ChatWindow({
     if (!file) return;
     setUploadedFile(file.name);
     setUploading(true);
+    setShowPdfPreview(false);
     toast.loading('Processing document...', { id: 'file-upload' });
     try {
       const extractedData = await uploadDocument(file);
       if (extractedData?.extracted_data) {
         setDocumentData(extractedData.extracted_data);
         toast.success('Document processed successfully', { id: 'file-upload' });
+      }
+      // Store file URL and doc ID for preview
+      if (extractedData?.file_url) {
+        setUploadedFileUrl(extractedData.file_url);
+        setUploadedDocId(extractedData.doc_id);
+        setShowPdfPreview(true);
       }
     } catch (err) {
       console.error('Upload failed:', err);
@@ -103,6 +124,9 @@ export default function ChatWindow({
   function clearFile() {
     setDocumentData(null);
     setUploadedFile(null);
+    setUploadedFileUrl(null);
+    setUploadedDocId(null);
+    setShowPdfPreview(false);
     if (fileRef.current) fileRef.current.value = '';
   }
 
@@ -158,25 +182,25 @@ export default function ChatWindow({
   return (
     <div className="panel-center">
       {/* Top bar - enhanced */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100/80 bg-white/80 backdrop-blur-sm z-10">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-blue-100 bg-white/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-2.5">
           {selectedMember ? (
             <>
-              <div className="w-2 h-2 rounded-full bg-laya-green shadow-sm shadow-laya-green/50" />
+              <div className="w-2 h-2 rounded-full bg-laya-green shadow-sm" />
               <span className="text-sm font-semibold text-laya-navy">
                 {selectedMember.first_name} {selectedMember.last_name}
               </span>
-              <span className="text-xs text-gray-300 mx-0.5">/</span>
-              <span className="text-xs text-gray-400 font-mono bg-gray-50 px-2 py-0.5 rounded-md">{selectedMember.member_id}</span>
+              <span className="text-xs text-gray-400 mx-0.5">/</span>
+              <span className="text-xs text-laya-blue-mid font-mono bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">{selectedMember.member_id}</span>
               {isDeveloper && (
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full badge-developer ml-1">
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 border border-pink-200 ml-1">
                   DEV MODE
                 </span>
               )}
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg gradient-teal flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-laya-blue to-laya-blue-mid flex items-center justify-center shadow-md shadow-blue-200">
                 <ShieldCheck size={14} className="text-white" />
               </div>
               <span className="text-sm font-medium text-laya-navy">Laya AI Claims Assistant</span>
@@ -189,8 +213,8 @@ export default function ChatWindow({
               onClick={onToggleArchitecture}
               className={`p-2 rounded-lg transition-colors ${
                 showArchitecture
-                  ? 'bg-purple-100 text-purple-600'
-                  : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
+                  ? 'bg-pink-50 text-pink-600 border border-pink-200 shadow-sm'
+                  : 'hover:bg-blue-50 text-gray-400 hover:text-laya-blue'
               }`}
               title="Toggle Architecture View"
             >
@@ -201,13 +225,22 @@ export default function ChatWindow({
             onClick={onTogglePanel}
             className={`p-2 rounded-lg transition-colors ${
               isPanelVisible
-                ? 'bg-laya-teal/10 text-laya-teal'
-                : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
+                ? 'bg-blue-50 text-laya-blue border border-blue-200 shadow-sm'
+                : 'hover:bg-blue-50 text-gray-400 hover:text-laya-blue'
             }`}
             title={isPanelVisible ? 'Hide agent panel' : 'Show agent panel'}
           >
             <PanelRight size={18} />
           </button>
+          {selectedMember && (
+            <button
+              onClick={() => setShowCallbackModal(true)}
+              className="p-2 rounded-lg transition-colors hover:bg-pink-50 text-gray-400 hover:text-laya-pink border border-transparent hover:border-pink-200"
+              title="Contact Customer Care"
+            >
+              <Headphones size={18} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -240,17 +273,17 @@ export default function ChatWindow({
               className="max-w-3xl mx-auto px-6"
             >
               <div className="flex items-start gap-3 ml-1 mt-2 mb-4">
-                <div className="w-8 h-8 rounded-full gradient-teal flex items-center justify-center shrink-0 shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-laya-blue to-laya-blue-mid flex items-center justify-center shrink-0 shadow-md shadow-blue-200">
                   <ShieldCheck size={14} className="text-white" />
                 </div>
-                <div className="bg-gray-50 rounded-2xl rounded-bl-md px-4 py-3 border border-gray-100">
+                <div className="bg-white/90 backdrop-blur-md rounded-2xl rounded-bl-md px-4 py-3 border border-blue-100 shadow-md shadow-blue-50">
                   <div className="flex items-center gap-2.5">
                     <div className="flex gap-1">
                       <span className="typing-dot" />
                       <span className="typing-dot" />
                       <span className="typing-dot" />
                     </div>
-                    <span className="text-xs text-gray-400 agent-pulse">
+                    <span className="text-xs text-laya-blue-mid agent-pulse font-medium">
                       {activeAgent || 'Processing claim...'}
                     </span>
                   </div>
@@ -268,6 +301,7 @@ export default function ChatWindow({
             selectedMember={selectedMember}
             hasMessages={messages.length > 0}
             onSelect={handleSuggestionSelect}
+            onRequestCallback={() => setShowCallbackModal(true)}
             isLoading={isLoading}
           />
         )}
@@ -280,46 +314,69 @@ export default function ChatWindow({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               onClick={scrollToBottom}
-              className="sticky bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors z-20"
+              className="sticky bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md shadow-lg shadow-blue-100 border border-blue-100 flex items-center justify-center hover:bg-blue-50 transition-colors z-20"
             >
-              <ArrowDown size={14} className="text-gray-500" />
+              <ArrowDown size={14} className="text-laya-blue" />
             </motion.button>
           )}
         </AnimatePresence>
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-100 bg-white px-4 py-3">
+      <div className="border-t border-blue-100 bg-white/80 backdrop-blur-md px-4 py-3">
         <div className="max-w-3xl mx-auto">
           {!selectedMember ? (
             <div className="flex items-center justify-center gap-2 py-2 text-sm text-gray-400">
-              <span className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-laya-blue-mid animate-pulse" />
               Select a member from the sidebar to start chatting
             </div>
           ) : (
             <div className="space-y-2">
-              {/* Attached file indicator */}
+              {/* Attached file indicator with preview */}
               <AnimatePresence>
                 {(uploadedFile || uploading) && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="flex items-center gap-2 text-xs bg-laya-teal/5 border border-laya-teal/15 px-3 py-2 rounded-xl w-fit"
+                    className="space-y-2"
                   >
-                    {uploading ? (
-                      <>
-                        <Loader size={13} className="text-laya-teal animate-spin" />
-                        <span className="text-laya-teal font-medium">Processing document...</span>
-                      </>
-                    ) : (
-                      <>
-                        <FileText size={13} className="text-laya-teal" />
-                        <span className="text-laya-teal font-medium truncate max-w-[200px]">{uploadedFile}</span>
-                        <button onClick={clearFile} className="text-gray-400 hover:text-laya-coral transition-colors p-0.5">
-                          <X size={12} />
-                        </button>
-                      </>
+                    <div className="flex items-center gap-2 text-xs bg-blue-50 border border-blue-200 px-3 py-2 rounded-xl w-fit shadow-sm">
+                      {uploading ? (
+                        <>
+                          <Loader size={13} className="text-laya-blue-mid animate-spin" />
+                          <span className="text-laya-blue-mid font-medium">Processing document...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText size={13} className="text-laya-blue-mid" />
+                          <span className="text-laya-blue-mid font-medium truncate max-w-[200px]">{uploadedFile}</span>
+                          {uploadedDocId && (
+                            <button
+                              onClick={() => setShowPdfPreview(!showPdfPreview)}
+                              className="text-laya-blue hover:text-laya-blue-mid transition-colors p-0.5 rounded"
+                              title="Toggle preview"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                              </svg>
+                            </button>
+                          )}
+                          <button onClick={clearFile} className="text-gray-400 hover:text-laya-coral transition-colors p-0.5">
+                            <X size={12} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Inline PDF thumbnail preview */}
+                    {showPdfPreview && uploadedDocId && !uploading && (
+                      <PdfPreview
+                        docId={uploadedDocId}
+                        fileName={uploadedFile}
+                        compact={true}
+                      />
                     )}
                   </motion.div>
                 )}
@@ -330,7 +387,7 @@ export default function ChatWindow({
                 {/* File upload button */}
                 <button
                   onClick={() => fileRef.current?.click()}
-                  className="shrink-0 p-2.5 rounded-xl border border-gray-200 hover:border-laya-teal/40 hover:bg-laya-teal/5 text-gray-400 hover:text-laya-teal transition-all"
+                  className="shrink-0 p-2.5 rounded-xl border border-blue-100 hover:border-laya-blue/40 hover:bg-blue-50 text-gray-400 hover:text-laya-blue transition-all"
                   title="Upload document (Ctrl+U)"
                   disabled={uploading}
                 >
@@ -349,8 +406,8 @@ export default function ChatWindow({
                   onClick={toggleVoiceInput}
                   className={`shrink-0 p-2.5 rounded-xl border transition-all ${
                     isListening
-                      ? 'border-laya-coral bg-laya-coral/10 text-laya-coral animate-pulse'
-                      : 'border-gray-200 hover:border-laya-teal/40 hover:bg-laya-teal/5 text-gray-400 hover:text-laya-teal'
+                      ? 'border-laya-coral bg-red-50 text-laya-coral animate-pulse shadow-sm'
+                      : 'border-blue-100 hover:border-laya-blue/40 hover:bg-blue-50 text-gray-400 hover:text-laya-blue'
                   }`}
                   title={isListening ? 'Stop listening' : 'Voice input'}
                 >
@@ -366,16 +423,16 @@ export default function ChatWindow({
                     placeholder={isListening ? 'Listening...' : 'Describe your claim or ask a question...'}
                     rows={1}
                     className={`w-full resize-none rounded-2xl border px-4 py-3 text-sm
-                      bg-white focus:outline-none focus:ring-2 focus:ring-laya-teal/20 focus:border-laya-teal/40
+                      bg-blue-50/50 text-laya-navy focus:outline-none focus:ring-2 focus:ring-laya-blue/20 focus:border-laya-blue/40
                       placeholder:text-gray-400 transition-all ${
-                        isListening ? 'border-laya-coral/40 bg-red-50/30' : 'border-gray-200'
+                        isListening ? 'border-laya-coral/40 bg-red-50/50' : 'border-blue-100'
                       }`}
                     disabled={isLoading}
                   />
                   {/* Keyboard shortcut hint */}
                   {!input && !isListening && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
-                      <kbd className="text-[9px] text-gray-300 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 font-mono">Enter</kbd>
+                      <kbd className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 font-mono">Enter</kbd>
                     </div>
                   )}
                 </div>
@@ -386,9 +443,9 @@ export default function ChatWindow({
                   whileTap={{ scale: 0.95 }}
                   onClick={handleSend}
                   disabled={isLoading || !input.trim()}
-                  className="shrink-0 p-3 rounded-2xl gradient-teal text-white shadow-md shadow-laya-teal/20
-                    hover:shadow-lg hover:shadow-laya-teal/30 transition-all
-                    disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                  className="shrink-0 p-3 rounded-2xl bg-gradient-to-r from-laya-blue to-laya-blue-mid text-white shadow-lg shadow-blue-200
+                    hover:shadow-xl hover:shadow-blue-300 transition-all
+                    disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:bg-gray-100 disabled:text-gray-400 disabled:from-gray-200 disabled:to-gray-200"
                 >
                   {isLoading ? (
                     <Loader size={18} className="animate-spin" />
@@ -401,6 +458,14 @@ export default function ChatWindow({
           )}
         </div>
       </div>
+
+      {/* Callback Request Modal */}
+      <CallbackRequestModal
+        isOpen={showCallbackModal}
+        onClose={() => setShowCallbackModal(false)}
+        selectedMember={selectedMember}
+        user={user}
+      />
     </div>
   );
 }

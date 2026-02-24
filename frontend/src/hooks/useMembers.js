@@ -51,10 +51,23 @@ export function useMembers() {
     }
   }, []);
 
+  // Refresh the currently selected member (re-fetch from backend)
+  // Call this after claim status updates, usage changes, etc.
+  const refreshMember = useCallback(async () => {
+    if (!selectedMember?.member_id) return;
+    try {
+      const data = await fetchMember(selectedMember.member_id);
+      setSelectedMember(data);
+    } catch (err) {
+      console.error('Failed to refresh member:', err);
+    }
+  }, [selectedMember?.member_id]);
+
   return {
     members,
     selectedMember,
     selectMember,
+    refreshMember,
     loading: membersLoading || selectLoading,
     membersLoading,
     error,

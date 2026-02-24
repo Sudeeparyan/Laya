@@ -65,10 +65,10 @@ export default function FileUpload({ onDocumentReady }) {
         className={`
           relative border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all duration-200
           ${dragOver
-            ? 'border-laya-teal bg-laya-teal/5 shadow-inner'
+            ? 'border-laya-blue-mid bg-laya-blue-mid/5 shadow-inner'
             : uploaded
-            ? 'border-laya-teal/30 bg-laya-teal/3'
-            : 'border-gray-200 hover:border-laya-teal/40 hover:bg-gray-50/50'
+            ? 'border-laya-blue-mid/30 bg-laya-blue-mid/3'
+            : 'border-gray-200 hover:border-laya-blue-mid/40 hover:bg-gray-50/50'
           }
         `}
       >
@@ -86,7 +86,7 @@ export default function FileUpload({ onDocumentReady }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex items-center justify-center gap-2 text-sm text-laya-teal py-1"
+              className="flex items-center justify-center gap-2 text-sm text-laya-blue-mid py-1"
             >
               <Loader size={18} className="animate-spin" />
               <span className="font-medium">Processing document...</span>
@@ -97,7 +97,7 @@ export default function FileUpload({ onDocumentReady }) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              className="flex items-center justify-center gap-2 text-sm text-laya-teal py-1"
+              className="flex items-center justify-center gap-2 text-sm text-laya-blue-mid py-1"
             >
               <FileText size={18} />
               <span className="font-medium truncate max-w-[160px]">{uploaded}</span>
@@ -141,11 +141,11 @@ export default function FileUpload({ onDocumentReady }) {
               transition={{ delay: i * 0.04 }}
               onClick={() => useDemoDoc(scenario)}
               className="text-left px-2.5 py-2 rounded-xl border border-gray-100 
-                hover:border-laya-teal/30 hover:bg-laya-teal/3 transition-all group"
+                hover:border-laya-blue-mid/30 hover:bg-laya-blue-mid/3 transition-all group"
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-laya-navy text-[11px] block truncate">{scenario.name}</span>
-                <ChevronRight size={10} className="text-gray-300 group-hover:text-laya-teal transition-colors shrink-0" />
+                <ChevronRight size={10} className="text-gray-400 group-hover:text-laya-blue-mid transition-colors shrink-0" />
               </div>
               <span className="text-[10px] text-gray-400 block mt-0.5 truncate">{scenario.member}</span>
             </motion.button>

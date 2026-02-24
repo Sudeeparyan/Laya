@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, Eye, EyeOff, Mail, Lock, ArrowRight, Sparkles,
-  Stethoscope, Code2, AlertCircle, Activity
+  Stethoscope, Code2, AlertCircle, Activity, FlaskConical
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -46,6 +46,9 @@ export default function LoginPage() {
     if (role === 'developer') {
       setEmail('admin@laya.ie');
       setPassword('admin123');
+    } else if (role === 'test') {
+      setEmail('test@laya.ie');
+      setPassword('test123');
     } else {
       setEmail('customer@laya.ie');
       setPassword('customer123');
@@ -53,14 +56,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen flex relative overflow-hidden bg-gradient-to-br from-white via-blue-50 to-pink-50/30">
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {PARTICLES.map((p) => (
           <motion.div
             key={p.id}
-            className="absolute rounded-full bg-laya-teal/20"
-            style={{ width: p.size, height: p.size, left: `${p.x}%`, top: `${p.y}%` }}
+            className="absolute rounded-full"
+            style={{
+              width: p.size,
+              height: p.size,
+              left: `${p.x}%`,
+              top: `${p.y}%`,
+              background: p.id % 3 === 0 ? 'rgba(230,0,126,0.15)' : 'rgba(0,114,206,0.15)',
+            }}
             animate={{
               y: [0, -30, 0],
               x: [0, 15, 0],
@@ -76,9 +85,10 @@ export default function LoginPage() {
         ))}
       </div>
 
-      {/* Gradient orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-laya-teal/8 blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/8 blur-[120px]" />
+      {/* Gradient orbs — blue & pink */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-200/30 blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-pink-200/30 blur-[120px]" />
+      <div className="absolute top-[50%] right-[20%] w-[300px] h-[300px] rounded-full bg-blue-100/40 blur-[100px]" />
 
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center relative px-16">
@@ -95,12 +105,12 @@ export default function LoginPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex items-center gap-4 mb-12"
           >
-            <div className="w-14 h-14 rounded-2xl gradient-teal flex items-center justify-center shadow-xl shadow-laya-teal/30">
+            <div className="w-14 h-14 rounded-2xl gradient-laya-hero flex items-center justify-center shadow-xl shadow-blue-300/30">
               <Shield size={28} className="text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">laya healthcare</h1>
-              <p className="text-sm text-laya-teal flex items-center gap-1.5">
+              <h1 className="text-2xl font-bold text-laya-navy tracking-tight">Laya Healthcare</h1>
+              <p className="text-sm text-laya-pink flex items-center gap-1.5">
                 <Sparkles size={12} /> AI Claims Intelligence
               </p>
             </div>
@@ -111,11 +121,11 @@ export default function LoginPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-4xl font-extrabold text-white leading-tight mb-6"
+            className="text-4xl font-extrabold text-laya-navy leading-tight mb-6"
           >
             Intelligent Claims
             <br />
-            <span className="bg-gradient-to-r from-laya-teal to-cyan-400 bg-clip-text text-transparent">
+            <span className="text-gradient-laya">
               Processing Platform
             </span>
           </motion.h2>
@@ -124,7 +134,7 @@ export default function LoginPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="text-lg text-gray-400 leading-relaxed mb-10"
+            className="text-lg text-laya-navy/60 leading-relaxed mb-10"
           >
             Multi-agent AI system for automated medical claims adjudication.
             Built for speed, accuracy, and transparency.
@@ -143,7 +153,7 @@ export default function LoginPage() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.7 + i * 0.1 }}
-                className="px-4 py-2 rounded-full text-sm font-medium bg-white/5 text-gray-300 border border-white/10 backdrop-blur-sm"
+                className="px-4 py-2 rounded-full text-sm font-medium bg-white/80 text-laya-blue border border-blue-100 backdrop-blur-sm shadow-sm"
               >
                 {f}
               </motion.span>
@@ -155,9 +165,9 @@ export default function LoginPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
-            className="mt-12 flex items-center gap-3 text-gray-500"
+            className="mt-12 flex items-center gap-3 text-laya-navy/40"
           >
-            <Activity size={16} className="text-laya-teal animate-pulse" />
+            <Activity size={16} className="text-laya-pink animate-pulse" />
             <span className="text-sm">System operational • v2.0</span>
           </motion.div>
         </motion.div>
@@ -173,54 +183,66 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-10 justify-center">
-            <div className="w-11 h-11 rounded-xl gradient-teal flex items-center justify-center shadow-lg shadow-laya-teal/30">
+            <div className="w-11 h-11 rounded-xl gradient-laya-hero flex items-center justify-center shadow-lg shadow-blue-300/30">
               <Shield size={22} className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">laya healthcare</h1>
-              <p className="text-xs text-laya-teal">AI Claims Assistant</p>
+              <h1 className="text-xl font-bold text-laya-navy">Laya Healthcare</h1>
+              <p className="text-xs text-laya-pink">AI Claims Assistant</p>
             </div>
           </div>
 
           {/* Card */}
-          <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-3xl p-8 shadow-2xl">
+          <div className="bg-white/80 backdrop-blur-xl border border-blue-100 rounded-3xl p-8 shadow-2xl shadow-blue-100/40">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-white mb-2">Welcome back</h2>
-              <p className="text-gray-400 text-sm">Sign in to access your claims dashboard</p>
+              <h2 className="text-2xl font-bold text-laya-navy mb-2">Welcome back</h2>
+              <p className="text-laya-navy/50 text-sm">Sign in to access your claims dashboard</p>
             </div>
 
             {/* Quick login buttons */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-3 gap-3 mb-6">
               <motion.button
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => quickLogin('developer')}
-                className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 text-purple-300 hover:border-purple-400/40 transition-all group"
+                className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-r from-pink-50 to-pink-100/50 border border-pink-200 text-laya-pink hover:border-pink-300 transition-all group"
               >
-                <Code2 size={16} className="group-hover:text-purple-300" />
+                <Code2 size={16} className="group-hover:text-laya-pink" />
                 <div className="text-left">
                   <p className="text-xs font-semibold">Developer</p>
-                  <p className="text-[10px] text-gray-500">Full access</p>
+                  <p className="text-[10px] text-laya-navy/40">Full access</p>
                 </div>
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => quickLogin('customer')}
-                className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-r from-teal-500/10 to-cyan-500/10 border border-teal-500/20 text-teal-300 hover:border-teal-400/40 transition-all group"
+                className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200 text-laya-blue hover:border-blue-300 transition-all group"
               >
-                <Stethoscope size={16} className="group-hover:text-teal-300" />
+                <Stethoscope size={16} className="group-hover:text-laya-blue" />
                 <div className="text-left">
                   <p className="text-xs font-semibold">Customer</p>
-                  <p className="text-[10px] text-gray-500">My claims</p>
+                  <p className="text-[10px] text-laya-navy/40">My claims</p>
+                </div>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => quickLogin('test')}
+                className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-amber-100/50 border border-amber-200 text-amber-600 hover:border-amber-300 transition-all group"
+              >
+                <FlaskConical size={16} className="group-hover:text-amber-600" />
+                <div className="text-left">
+                  <p className="text-xs font-semibold">Test (Liam)</p>
+                  <p className="text-[10px] text-laya-navy/40">Demo flow</p>
                 </div>
               </motion.button>
             </div>
 
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="text-xs text-gray-500">or sign in manually</span>
-              <div className="flex-1 h-px bg-white/10" />
+              <div className="flex-1 h-px bg-blue-100" />
+              <span className="text-xs text-laya-navy/40">or sign in manually</span>
+              <div className="flex-1 h-px bg-blue-100" />
             </div>
 
             {/* Error alert */}
@@ -230,10 +252,10 @@ export default function LoginPage() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20"
+                  className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200"
                 >
-                  <AlertCircle size={16} className="text-red-400 shrink-0" />
-                  <span className="text-sm text-red-300">{error}</span>
+                  <AlertCircle size={16} className="text-red-500 shrink-0" />
+                  <span className="text-sm text-red-600">{error}</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -241,30 +263,30 @@ export default function LoginPage() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="relative">
-                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-300" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email address"
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-gray-500 focus:outline-none focus:border-laya-teal/50 focus:ring-2 focus:ring-laya-teal/20 transition-all text-sm"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-blue-50/50 border border-blue-100 text-laya-navy placeholder:text-blue-300 focus:outline-none focus:border-laya-blue-mid/50 focus:ring-2 focus:ring-blue-100 transition-all text-sm"
                   required
                 />
               </div>
               <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-300" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-gray-500 focus:outline-none focus:border-laya-teal/50 focus:ring-2 focus:ring-laya-teal/20 transition-all text-sm"
+                  className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-blue-50/50 border border-blue-100 text-laya-navy placeholder:text-blue-300 focus:outline-none focus:border-laya-blue-mid/50 focus:ring-2 focus:ring-blue-100 transition-all text-sm"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-300 hover:text-laya-blue transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -275,7 +297,7 @@ export default function LoginPage() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 rounded-xl gradient-teal text-white font-semibold text-sm shadow-lg shadow-laya-teal/25 hover:shadow-xl hover:shadow-laya-teal/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl gradient-laya-hero text-white font-semibold text-sm shadow-lg shadow-blue-200/50 hover:shadow-xl hover:shadow-blue-300/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <motion.div
@@ -292,15 +314,15 @@ export default function LoginPage() {
               </motion.button>
             </form>
 
-            <p className="text-center text-sm text-gray-500 mt-6">
+            <p className="text-center text-sm text-laya-navy/40 mt-6">
               Don't have an account?{' '}
-              <Link to="/register" className="text-laya-teal hover:text-laya-teal-light font-medium transition-colors">
+              <Link to="/register" className="text-laya-pink hover:text-laya-pink-light font-medium transition-colors">
                 Create one
               </Link>
             </p>
           </div>
 
-          <p className="text-center text-xs text-gray-600 mt-6">
+          <p className="text-center text-xs text-laya-navy/30 mt-6">
             © 2026 Laya Healthcare • Powered by Multi-Agent AI
           </p>
         </motion.div>

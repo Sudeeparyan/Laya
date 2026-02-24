@@ -7,7 +7,7 @@
 import { motion } from 'framer-motion';
 import {
   MessageSquare, HelpCircle, RefreshCw, FileText, Stethoscope,
-  Shield, TrendingUp, ArrowRight, Sparkles
+  Shield, TrendingUp, ArrowRight, Sparkles, Headphones
 } from 'lucide-react';
 
 /**
@@ -29,6 +29,7 @@ function getSuggestions(decision, flags, selectedMember, hasMessages) {
       { text: 'Why was my claim rejected?', icon: HelpCircle, type: 'question' },
       { text: 'Can I appeal this decision?', icon: RefreshCw, type: 'question' },
       { text: 'What documents do I need to resubmit?', icon: FileText, type: 'question' },
+      { text: 'Talk to a person', icon: Headphones, type: 'callback', isCallback: true },
     );
   } else if (decision === 'PARTIALLY_APPROVED') {
     suggestions.push(
@@ -81,12 +82,13 @@ function getSuggestions(decision, flags, selectedMember, hasMessages) {
 }
 
 const typeColors = {
-  action: 'bg-laya-teal/5 border-laya-teal/20 text-laya-teal hover:bg-laya-teal/10 hover:border-laya-teal/40',
-  question: 'bg-blue-50 border-blue-200/50 text-blue-600 hover:bg-blue-100/60 hover:border-blue-300/50',
-  warning: 'bg-amber-50 border-amber-200/50 text-amber-600 hover:bg-amber-100/60 hover:border-amber-300/50',
+  action: 'bg-blue-50 border-blue-200 text-laya-blue hover:bg-blue-100 hover:border-blue-300 shadow-sm',
+  question: 'bg-pink-50 border-pink-200 text-pink-600 hover:bg-pink-100 hover:border-pink-300 shadow-sm',
+  warning: 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 shadow-sm',
+  callback: 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100 hover:border-purple-300 shadow-sm',
 };
 
-export default function SmartSuggestions({ decision, flags, selectedMember, hasMessages, onSelect, isLoading }) {
+export default function SmartSuggestions({ decision, flags, selectedMember, hasMessages, onSelect, onRequestCallback, isLoading }) {
   const suggestions = getSuggestions(decision, flags, selectedMember, hasMessages);
 
   if (suggestions.length === 0 || isLoading) return null;
@@ -99,7 +101,7 @@ export default function SmartSuggestions({ decision, flags, selectedMember, hasM
       className="max-w-3xl mx-auto px-6 pb-3"
     >
       <div className="flex items-center gap-1.5 mb-2">
-        <Sparkles size={10} className="text-gray-300" />
+        <Sparkles size={10} className="text-gray-400" />
         <span className="text-[10px] font-medium text-gray-400">Suggested follow-ups</span>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -114,7 +116,7 @@ export default function SmartSuggestions({ decision, flags, selectedMember, hasM
               transition={{ delay: 0.6 + i * 0.08 }}
               whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onSelect(suggestion.text)}
+              onClick={() => suggestion.isCallback && onRequestCallback ? onRequestCallback() : onSelect(suggestion.text)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all duration-200 ${colors}`}
             >
               <Icon size={12} />

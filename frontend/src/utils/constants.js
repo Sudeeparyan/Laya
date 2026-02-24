@@ -19,11 +19,11 @@ export const COLORS = {
 
 // Decision badge styling
 export const DECISION_STYLES = {
-  APPROVED: { bg: 'bg-laya-green', text: 'text-white', label: 'APPROVED' },
-  REJECTED: { bg: 'bg-laya-coral', text: 'text-white', label: 'REJECTED' },
-  'PARTIALLY APPROVED': { bg: 'bg-laya-amber', text: 'text-white', label: 'PARTIALLY APPROVED' },
-  PENDING: { bg: 'bg-laya-blue', text: 'text-white', label: 'PENDING' },
-  'ACTION REQUIRED': { bg: 'bg-orange-500', text: 'text-white', label: 'ACTION REQUIRED' },
+  APPROVED: { bg: 'bg-green-50 border border-green-200 shadow-sm shadow-green-100', text: 'text-green-600', label: 'APPROVED' },
+  REJECTED: { bg: 'bg-red-50 border border-red-200 shadow-sm shadow-red-100', text: 'text-red-500', label: 'REJECTED' },
+  'PARTIALLY APPROVED': { bg: 'bg-amber-50 border border-amber-200 shadow-sm shadow-amber-100', text: 'text-amber-700', label: 'PARTIALLY APPROVED' },
+  PENDING: { bg: 'bg-blue-50 border border-blue-200 shadow-sm shadow-blue-100', text: 'text-laya-blue-mid', label: 'PENDING' },
+  'ACTION REQUIRED': { bg: 'bg-orange-50 border border-orange-200 shadow-sm shadow-orange-100', text: 'text-orange-600', label: 'ACTION REQUIRED' },
 };
 
 // Demo test cases (from docs/input_output.md)

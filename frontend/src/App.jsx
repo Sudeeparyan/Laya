@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import DevDashboardPage from './pages/DevDashboardPage';
+import MemberProfilePage from './pages/MemberProfilePage';
 import { motion } from 'framer-motion';
 import { Shield, Loader } from 'lucide-react';
 import { Toaster } from 'sonner';
@@ -14,18 +15,18 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-blue-50 to-white">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center gap-4"
         >
-          <div className="w-16 h-16 rounded-2xl gradient-teal flex items-center justify-center shadow-xl shadow-laya-teal/30 animate-pulse">
+          <div className="w-16 h-16 rounded-2xl gradient-laya-hero flex items-center justify-center shadow-xl shadow-blue-300/30 animate-pulse">
             <Shield size={32} className="text-white" />
           </div>
-          <div className="flex items-center gap-2 text-gray-400">
-            <Loader size={16} className="animate-spin text-laya-teal" />
-            <span className="text-sm">Loading...</span>
+          <div className="flex items-center gap-2 text-blue-400">
+            <Loader size={16} className="animate-spin text-laya-blue-mid" />
+            <span className="text-sm text-laya-navy">Loading...</span>
           </div>
         </motion.div>
       </div>
@@ -69,10 +70,12 @@ export default function App() {
           closeButton
         />
         <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/dev-dashboard" element={<ProtectedRoute><DevDashboardPage /></ProtectedRoute>} />
+          <Route path="/dev-dashboard/member/:memberId" element={<ProtectedRoute><MemberProfilePage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>

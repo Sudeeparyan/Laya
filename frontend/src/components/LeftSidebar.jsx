@@ -29,15 +29,15 @@ export default function LeftSidebar({
       {/* Logo / Brand */}
       <div className="p-4 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg gradient-teal flex items-center justify-center shadow-lg shadow-laya-teal/20">
+          <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center shadow-lg">
             <Shield size={18} className="text-white" />
           </div>
           <div>
             <h1 className="text-sm font-bold text-white leading-tight tracking-tight">
-              laya healthcare
+              Laya Healthcare
             </h1>
-            <p className="text-[10px] text-gray-500 flex items-center gap-1">
-              <Sparkles size={8} className="text-laya-teal" />
+            <p className="text-[10px] text-white/50 flex items-center gap-1">
+              <Sparkles size={8} className="text-pink-300" />
               AI Claims Assistant
             </p>
           </div>
@@ -51,12 +51,12 @@ export default function LeftSidebar({
           whileTap={{ scale: 0.98 }}
           onClick={onNewChat}
           className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg
-            border border-white/10 hover:border-white/20 hover:bg-sidebar-hover
-            text-sidebar-text-light text-sm font-medium transition-all duration-200"
+            border border-white/20 hover:border-white/30 hover:bg-white/10
+            text-white text-sm font-medium transition-all duration-200"
         >
-          <Plus size={16} className="text-laya-teal" />
+          <Plus size={16} className="text-pink-300" />
           <span>New Chat</span>
-          <kbd className="ml-auto text-[9px] text-gray-500 bg-white/5 border border-white/10 px-1.5 py-0.5 rounded font-mono">Ctrl+K</kbd>
+          <kbd className="ml-auto text-[9px] text-white/40 bg-white/10 border border-white/15 px-1.5 py-0.5 rounded font-mono">Ctrl+K</kbd>
         </motion.button>
       </div>
 
@@ -64,9 +64,9 @@ export default function LeftSidebar({
       <div className="flex-1 overflow-y-auto dark-scroll px-3 space-y-0.5">
         {chatSessions.length === 0 ? (
           <div className="text-center py-8">
-            <MessageSquare size={24} className="mx-auto text-gray-600 mb-2 opacity-50" />
-            <p className="text-xs text-gray-600">No conversations yet</p>
-            <p className="text-[10px] text-gray-700 mt-1">Start a new chat to begin</p>
+            <MessageSquare size={24} className="mx-auto text-white/30 mb-2 opacity-50" />
+            <p className="text-xs text-white/40">No conversations yet</p>
+            <p className="text-[10px] text-white/25 mt-1">Start a new chat to begin</p>
           </div>
         ) : (
           <AnimatePresence>
@@ -112,21 +112,21 @@ export default function LeftSidebar({
       </div>
 
       {/* Member Selector at Bottom */}
-      <div className="p-3 border-t border-white/5">
+      <div className="p-3 border-t border-white/20">
         <div className="mb-2">
-          <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 px-1">
-            <Users size={10} className="text-laya-teal" />
+          <label className="text-[10px] font-semibold text-white/50 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 px-1">
+            <Users size={10} className="text-pink-300" />
             {isDeveloper ? 'All Members' : 'My Account'}
           </label>
 
           {/* Error state */}
           {membersError && members.length === 0 && (
-            <div className="mb-2 flex items-center gap-2 px-2 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
-              <AlertCircle size={12} className="text-red-400 shrink-0" />
-              <span className="text-[11px] text-red-300 flex-1">Failed to load members</span>
+            <div className="mb-2 flex items-center gap-2 px-2 py-1.5 rounded-lg bg-red-500/15 border border-red-400/20">
+              <AlertCircle size={12} className="text-red-300 shrink-0" />
+              <span className="text-[11px] text-red-200 flex-1">Failed to load members</span>
               <button
                 onClick={onRetryLoadMembers}
-                className="p-1 rounded hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors"
+                className="p-1 rounded hover:bg-red-500/20 text-red-300 hover:text-red-200 transition-colors"
                 title="Retry"
               >
                 <RefreshCw size={12} />
@@ -136,8 +136,8 @@ export default function LeftSidebar({
 
           {/* Loading state */}
           {membersListLoading && members.length === 0 ? (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-sidebar-hover text-gray-400 text-sm">
-              <RefreshCw size={14} className="animate-spin text-laya-teal" />
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-white/10 text-white/70 text-sm">
+              <RefreshCw size={14} className="animate-spin text-pink-300" />
               <span>Loading members...</span>
             </div>
           ) : (
@@ -160,16 +160,16 @@ export default function LeftSidebar({
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-sidebar-hover/60"
+            className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-white/10"
           >
-            <div className="w-8 h-8 rounded-full gradient-teal flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-blue-400 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
               {selectedMember.first_name?.[0]}{selectedMember.last_name?.[0]}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs text-white font-medium truncate">
                 {selectedMember.first_name} {selectedMember.last_name}
               </p>
-              <p className="text-[10px] text-gray-500 flex items-center gap-1">
+              <p className="text-[10px] text-white/50 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-laya-green inline-block" />
                 {selectedMember.status} &bull; {selectedMember.scheme_name}
               </p>
@@ -179,11 +179,11 @@ export default function LeftSidebar({
 
         {/* User profile & logout */}
         {user && (
-          <div className="mt-3 pt-3 border-t border-white/5">
+          <div className="mt-3 pt-3 border-t border-white/20">
             <div className="flex items-center gap-2.5 px-2 py-1.5">
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
-                style={{ background: user.avatar_color || '#00A99D' }}
+                style={{ background: user.avatar_color || '#0072CE' }}
               >
                 {user.first_name?.[0]}{user.last_name?.[0]}
               </div>
@@ -193,7 +193,7 @@ export default function LeftSidebar({
                 </p>
                 <div className="flex items-center gap-1.5">
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                    user.role === 'developer' ? 'badge-developer' : 'badge-customer'
+                    user.role === 'developer' ? 'bg-pink-500/20 text-pink-200 border border-pink-400/30' : 'bg-white/15 text-white/70 border border-white/20'
                   }`}>
                     {user.role === 'developer' ? (
                       <span className="flex items-center gap-0.5"><Code2 size={8} /> DEV</span>
@@ -207,7 +207,7 @@ export default function LeftSidebar({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={onLogout}
-                className="p-1.5 rounded-lg hover:bg-red-500/15 text-gray-500 hover:text-red-400 transition-all"
+                className="p-1.5 rounded-lg hover:bg-red-500/20 text-white/50 hover:text-red-300 transition-all"
                 title="Sign out"
               >
                 <LogOut size={14} />
@@ -221,19 +221,19 @@ export default function LeftSidebar({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate('/dev-dashboard')}
                 className="w-full mt-2 flex items-center gap-2 px-3 py-2 rounded-lg
-                  bg-gradient-to-r from-purple-500/10 to-purple-400/5 border border-purple-500/20
-                  text-purple-300 hover:text-purple-200 hover:border-purple-500/30 transition-all text-[11px] font-medium"
+                  bg-gradient-to-r from-pink-500/15 to-blue-500/10 border border-pink-400/20
+                  text-pink-200 hover:text-white hover:border-pink-400/40 transition-all text-[11px] font-medium"
               >
                 <LayoutDashboard size={13} />
                 <span>Claims Dashboard</span>
-                <Sparkles size={9} className="ml-auto text-purple-400" />
+                <Sparkles size={9} className="ml-auto text-pink-300" />
               </motion.button>
             )}
           </div>
         )}
 
         <div className="mt-2 text-center">
-          <p className="text-[9px] text-gray-600">
+          <p className="text-[9px] text-white/30">
             Powered by AI &bull; v2.0
           </p>
         </div>
