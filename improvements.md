@@ -958,34 +958,6 @@ After the developer submits a decision via `submitClaimReview()`, auto-refresh:
 - The AnalyticsCards (refetch `/api/queue/analytics`)
 - The selected claim's status badge in the ClaimReviewPanel
 
-```javascript
-const handleSubmitDecision = async (decision, notes, payoutOverride) => {
-  const result = await submitClaimReview({
-    claim_id: selectedClaim.claim_id,
-    member_id: selectedClaim.member_id,
-    decision,
-    reviewer_notes: notes,
-    payout_amount: payoutOverride,
-  });
-
-  if (result.success) {
-    toast.success(`Claim ${decision.toLowerCase()} successfully`);
-
-    // Auto-refresh dashboard data
-    await Promise.all([
-      refreshClaimsQueue(),
-      refreshAnalytics(),
-    ]);
-
-    // Update selected claim in-place
-    setSelectedClaim(prev => ({
-      ...prev,
-      status: decision,
-      reviewed_by: result.reviewed_by,
-    }));
-  }
-};
-```
 
 ---
 
